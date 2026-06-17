@@ -1,0 +1,1100 @@
+---
+title: "INE y datos nacionales"
+author: "Jordi Gascons i Cambra"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Paquetes y datos a cargar**
+
+```{r}
+
+# install.packages("sqldf")
+# install.packages("dplyr")
+# install.packages("ggplot2")
+# install.packages("readxl")
+# install.packages("writexl")
+# install.packages("gridExtra")
+# install.packages("reshape2")
+# install.packages("zoo")
+# install.packages("MortalityLaws")
+# install.packages("xlsx")
+# install.packages("minpack.lm")
+
+library(sqldf)
+library(dplyr)
+library(ggplot2)
+library(readxl)
+library(writexl)
+library(gridExtra)
+library(reshape2)
+library(zoo)
+library(MortalityLaws)
+library(xlsx)
+library(minpack.lm)
+
+#load("Datos/TFG_Datos.RData") # Datos importados en 1. Lectura y preprocesamiento de los datos
+#load("Datos/TFG_Funciones.RData") # Funciones a importar diseñadas en 4. Parametrización y funciones
+load("Datos/TFG5_Datos.RData")
+
+getwd()
+
+```
+
+## INTRODUCCIÓN
+
+En este documento **6. Implementación del estudio con datos nacionales** se pretende utilizar las funciones diseñadas **4. Parametrización y funciones** para realizar todos los cálculos demográficos y elaborar todos los gráficos necesarios del proyecto con datos procedentes del INE sobre el volumen de población nacional. Se trata de una réplica de **5. Automatización de los resultados** pero con datos del total poblacional procedentes del INE.
+
+## METODOLOGÍA - CONSTRUCCIÓN DE LA TABLA DE MORTALIDAD
+
+### PASO 1) INICIALIZACIÓN (RANGO DE EDADES)
+
+*1r paso*: Nos aseguramos de que todos los datos estén incluidos dentro del mismo rango de edad. En el caso de los datos proporcionados por el INE se pueden extraer el total de supervivientes y defunciones des de los 0 hasta los 99 años de edad de manera individual. Por ende, el rango de edad será de los 0 a los +100 años de edad.
+
+```{r}
+
+### Conjunto de supervivientes
+
+sup_2017 = data.frame(Edad = c(pop_2017$Edad[1:100], "100 y más años"), 
+                      Hombre = c(pop_2017$Hombre[1:100], sum(pop_2017$Hombre[101:106])), 
+                      Mujer = c(pop_2017$Mujer[1:100], sum(pop_2017$Mujer[101:106])))
+
+sup_2018 = data.frame(Edad = c(pop_2018$Edad[1:100], "100 y más años"), 
+                      Hombre = c(pop_2018$Hombre[1:100], sum(pop_2018$Hombre[101:106])), 
+                      Mujer = c(pop_2018$Mujer[1:100], sum(pop_2018$Mujer[101:106])))
+
+sup_2019 = data.frame(Edad = c(pop_2019$Edad[1:100], "100 y más años"), 
+                      Hombre = c(pop_2019$Hombre[1:100], sum(pop_2019$Hombre[101:106])), 
+                      Mujer = c(pop_2019$Mujer[1:100], sum(pop_2019$Mujer[101:106])))
+
+sup_2020 = data.frame(Edad = c(pop_2020$Edad[1:100], "100 y más años"), 
+                      Hombre = c(pop_2020$Hombre[1:100], sum(pop_2020$Hombre[101:106])), 
+                      Mujer = c(pop_2020$Mujer[1:100], sum(pop_2020$Mujer[101:106])))
+
+sup_2021 = data.frame(Edad = c(pop_2021$Edad[1:100], "100 y más años"), 
+                      Hombre = c(pop_2021$Hombre[1:100], sum(pop_2021$Hombre[101:106])), 
+                      Mujer = c(pop_2021$Mujer[1:100], sum(pop_2021$Mujer[101:106])))
+
+sup_2022 = data.frame(Edad = c(pop_2022$Edad[1:100], "100 y más años"), 
+                      Hombre = c(pop_2022$Hombre[1:100], sum(pop_2022$Hombre[101:106])), 
+                      Mujer = c(pop_2022$Mujer[1:100], sum(pop_2022$Mujer[101:106])))
+
+sup_2023 = data.frame(Edad = c(pop_2023$Edad[1:100], "100 y más años"), 
+                      Hombre = c(pop_2023$Hombre[1:100], sum(pop_2023$Hombre[101:106])), 
+                      Mujer = c(pop_2023$Mujer[1:100], sum(pop_2023$Mujer[101:106])))
+
+sup_2024 = data.frame(Edad = c(pop_2024$Edad[1:100], "100 y más años"), 
+                      Hombre = c(pop_2024$Hombre[1:100], sum(pop_2024$Hombre[101:106])), 
+                      Mujer = c(pop_2024$Mujer[1:100], sum(pop_2024$Mujer[101:106])))
+
+### Conjunto de defunciones
+
+def_2017$Edad = c("0 años", def_2017$Edad[2:101])
+def_2018$Edad = c("0 años", def_2018$Edad[2:101])
+def_2019$Edad = c("0 años", def_2019$Edad[2:101])
+def_2020$Edad = c("0 años", def_2020$Edad[2:101])
+def_2021$Edad = c("0 años", def_2021$Edad[2:101])
+def_2022$Edad = c("0 años", def_2022$Edad[2:101])
+def_2023$Edad = c("0 años", def_2023$Edad[2:101])
+def_2024$Edad = c("0 años", def_2024$Edad[2:101])
+
+```
+
+
+### PASO 2) CORRECCIÓN CENSAL (CÁLCULO DE POBLACIÓN SUPERVIVIENTE) 
+
+### PASO 3) CÁLCULO DE LA TASA BRUTA DE MORTALIDAD + CORRECCIÓN EN EDADES AVANZADAS
+
+*3r paso*: La Tasa Bruta de Mortalidad (TBM) se calculcará dividiendo el número de defunciones por el número de supervivientes. Posteriormente, se aplicará la **corrección a las Tasas Brutas de Mortalidad** calculadas a esos grupos de edades por encima de los 95 años. Este cálculo es necesario ya que a partir de una determinada edad el conjunto de individuos restante es muy pequeño y además las TBM son bastante inestables.
+
+
+```{r}
+
+### AÑO 2017
+
+TBM.INE.2017 = Tasa.Bruta.Mortalidad(defunciones = def_2017,
+                                     supervivientes = sup_2017,
+                                     edades = def_2017$Edad,
+                                     var = c("Hombre","Mujer"))
+
+
+TBM.INE.2017 = rbind(TBM.INE.2017, 
+                     data.frame(Edad = paste0(101:115, " años"), 
+                                Hombre = rep(TBM.INE.2017$Hombre[101], times = 15),
+                                Mujer = rep(TBM.INE.2017$Mujer[101], times = 15)))
+
+
+
+TBM.INE.2017 = correccion.edades.avanzadas(TBM.INE.2017, w = 115)
+TBM.INE.2017$Edad = 0:115
+
+
+### AÑO 2018
+
+TBM.INE.2018 = Tasa.Bruta.Mortalidad(defunciones = def_2018,
+                                     supervivientes = sup_2018,
+                                     edades = def_2018$Edad,
+                                     var = c("Hombre","Mujer"))
+
+
+TBM.INE.2018 = rbind(TBM.INE.2018, 
+                     data.frame(Edad = paste0(101:115, " años"), 
+                                Hombre = rep(TBM.INE.2018$Hombre[101], times = 15),
+                                Mujer = rep(TBM.INE.2018$Mujer[101], times = 15)))
+
+
+
+TBM.INE.2018 = correccion.edades.avanzadas(TBM.INE.2018, w = 115)
+TBM.INE.2018$Edad = 0:115
+
+### AÑO 2019
+
+TBM.INE.2019 = Tasa.Bruta.Mortalidad(defunciones = def_2019,
+                                     supervivientes = sup_2019,
+                                     edades = def_2019$Edad,
+                                     var = c("Hombre","Mujer"))
+
+
+TBM.INE.2019 = rbind(TBM.INE.2019, 
+                     data.frame(Edad = paste0(101:115, " años"), 
+                                Hombre = rep(TBM.INE.2019$Hombre[101], times = 15),
+                                Mujer = rep(TBM.INE.2019$Mujer[101], times = 15)))
+
+
+
+TBM.INE.2019 = correccion.edades.avanzadas(TBM.INE.2019, w = 115)
+TBM.INE.2019$Edad = 0:115
+
+### AÑO 2020
+
+TBM.INE.2020 = Tasa.Bruta.Mortalidad(defunciones = def_2020,
+                                     supervivientes = sup_2020,
+                                     edades = def_2020$Edad,
+                                     var = c("Hombre","Mujer"))
+
+
+TBM.INE.2020 = rbind(TBM.INE.2020, 
+                     data.frame(Edad = paste0(101:115, " años"), 
+                                Hombre = rep(TBM.INE.2020$Hombre[101], times = 15),
+                                Mujer = rep(TBM.INE.2020$Mujer[101], times = 15)))
+
+
+
+TBM.INE.2020 = correccion.edades.avanzadas(TBM.INE.2020, w = 115)
+TBM.INE.2020$Edad = 0:115
+
+### AÑO 2021
+
+TBM.INE.2021 = Tasa.Bruta.Mortalidad(defunciones = def_2021,
+                                     supervivientes = sup_2021,
+                                     edades = def_2021$Edad,
+                                     var = c("Hombre","Mujer"))
+
+
+TBM.INE.2021 = rbind(TBM.INE.2021, 
+                     data.frame(Edad = paste0(101:115, " años"), 
+                                Hombre = rep(TBM.INE.2021$Hombre[101], times = 15),
+                                Mujer = rep(TBM.INE.2021$Mujer[101], times = 15)))
+
+
+
+TBM.INE.2021 = correccion.edades.avanzadas(TBM.INE.2021, w = 115)
+TBM.INE.2021$Edad = 0:115
+
+### AÑO 2022
+
+TBM.INE.2022 = Tasa.Bruta.Mortalidad(defunciones = def_2022,
+                                     supervivientes = sup_2022,
+                                     edades = def_2022$Edad,
+                                     var = c("Hombre","Mujer"))
+
+
+TBM.INE.2022 = rbind(TBM.INE.2022, 
+                     data.frame(Edad = paste0(101:115, " años"), 
+                                Hombre = rep(TBM.INE.2022$Hombre[101], times = 15),
+                                Mujer = rep(TBM.INE.2022$Mujer[101], times = 15)))
+
+
+
+TBM.INE.2022 = correccion.edades.avanzadas(TBM.INE.2022, w = 115)
+TBM.INE.2022$Edad = 0:115
+
+### AÑO 2023
+
+TBM.INE.2023 = Tasa.Bruta.Mortalidad(defunciones = def_2023,
+                                     supervivientes = sup_2023,
+                                     edades = def_2023$Edad,
+                                     var = c("Hombre","Mujer"))
+
+
+TBM.INE.2023 = rbind(TBM.INE.2023, 
+                     data.frame(Edad = paste0(101:115, " años"), 
+                                Hombre = rep(TBM.INE.2023$Hombre[101], times = 15),
+                                Mujer = rep(TBM.INE.2023$Mujer[101], times = 15)))
+
+
+
+TBM.INE.2023 = correccion.edades.avanzadas(TBM.INE.2023, w = 115)
+TBM.INE.2023$Edad = 0:115
+
+### AÑO 2024
+
+TBM.INE.2024 = Tasa.Bruta.Mortalidad(defunciones = def_2024,
+                                     supervivientes = sup_2024,
+                                     edades = def_2024$Edad,
+                                     var = c("Hombre","Mujer"))
+
+
+TBM.INE.2024 = rbind(TBM.INE.2024, 
+                     data.frame(Edad = paste0(101:115, " años"), 
+                                Hombre = rep(TBM.INE.2024$Hombre[101], times = 15),
+                                Mujer = rep(TBM.INE.2024$Mujer[101], times = 15)))
+
+
+
+TBM.INE.2024 = correccion.edades.avanzadas(TBM.INE.2024, w = 115)
+TBM.INE.2024$Edad = 0:115
+
+### AÑO 2025 - AÚN NO SE DISPONEN DE LOS DATOS DE LAS DEFUNCIONES
+
+```
+
+
+### PASOS 4 Y 5) AJUSTE DE LA CURVA Y CÁLCULO DE LAS ESPERANZAS DE VIDA
+
+*4o paso*: La finalidad del cálculo de la tabla de mortalidad es estimar las esperanzas de vida de un individuo concreto. En primer lugar, se ajustarán las TBM calculadas mediante diferentes leyes de mortalidad. En segundo lugar se calculará la esperanza de vida residual a partir de las TBM ajustadas y también a partir de las obtenidas directamente por las TBM sin ajuste previo.
+
+Las leyes con las cuales se probarán los ajustes serán:
+- Ley de **Heligman-Pollard**
+- Ley de **Gompertz**
+- Ley de **Gompertz-Makeham**
+
+#### AJUSTE 1) HELIGMAN-POLLARD
+
+**AJUSTE HELIGMAN-POLLARD**
+
+```{r}
+
+### AÑO 2017
+
+df.INE.2017.HP = ajuste.curva.HP(edad.inicio = 0, 
+                                         TBM = TBM.INE.2017, 
+                                         var = c("Hombre", "Mujer"))[[1]]
+
+### AÑO 2018
+
+df.INE.2018.HP = ajuste.curva.HP(edad.inicio = 0, 
+                                         TBM = TBM.INE.2018, 
+                                         var = c("Hombre", "Mujer"))[[1]]
+
+### AÑO 2019
+
+df.INE.2019.HP = ajuste.curva.HP(edad.inicio = 0, 
+                                         TBM = TBM.INE.2019, 
+                                         var = c("Hombre", "Mujer"))[[1]]
+
+### AÑO 2020
+
+df.INE.2020.HP = ajuste.curva.HP(edad.inicio = 0, 
+                                         TBM = TBM.INE.2020, 
+                                         var = c("Hombre", "Mujer"))[[1]]
+
+### AÑO 2021
+
+df.INE.2021.HP = ajuste.curva.HP(edad.inicio = 0, 
+                                         TBM = TBM.INE.2021, 
+                                         var = c("Hombre", "Mujer"))[[1]]
+
+### AÑO 2022
+
+df.INE.2022.HP = ajuste.curva.HP(edad.inicio = 0, 
+                                         TBM = TBM.INE.2022, 
+                                         var = c("Hombre", "Mujer"))[[1]]
+
+### AÑO 2023
+
+df.INE.2023.HP = ajuste.curva.HP(edad.inicio = 0, 
+                                         TBM = TBM.INE.2023, 
+                                         var = c("Hombre", "Mujer"))[[1]]
+
+### AÑO 2024
+
+df.INE.2024.HP = ajuste.curva.HP(edad.inicio = 0, 
+                                         TBM = TBM.INE.2024, 
+                                         var = c("Hombre", "Mujer"))[[1]]
+
+### AÑO 2025 - AÚN NO HAN LLEGADO LOS DATOS DE LAS DEFUNCIONES
+
+```
+
+
+**CÁLCULO DE LAS ESPERANZAS DE VIDA RESIDUALES A PARTIR DEL AJUSTE HELIGMAN-POLLARD**
+
+esp.pred = Esperanzas de vida calculadas a partir de las TBM ajustadas
+esp.Br = Esperanzas de vida calculadas a partir de las TBM sin ajustar
+
+```{r}
+
+var1 = c("Pred-Hombre", "Pred-Mujer")
+
+var2 = c("Hombre", "Mujer") 
+
+### AÑO 2017
+
+esp.pred.INE.2017.HP = calculo_ex2(TBM = df.INE.2017.HP[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 0:115)
+
+esp.Br.INE.2017.HP = calculo_ex2(TBM = df.INE.2017.HP[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 0:115,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2017.HP = merge(df.INE.2017.HP, esp.pred.INE.2017.HP, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2017.HP = merge(df.INE.2017.HP, esp.Br.INE.2017.HP, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+
+### AÑO 2018
+
+esp.pred.INE.2018.HP = calculo_ex2(TBM = df.INE.2018.HP[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 0:115)
+
+esp.Br.INE.2018.HP = calculo_ex2(TBM = df.INE.2018.HP[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 0:115,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2018.HP = merge(df.INE.2018.HP, esp.pred.INE.2018.HP, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2018.HP = merge(df.INE.2018.HP, esp.Br.INE.2018.HP, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+### AÑO 2019
+
+esp.pred.INE.2019.HP = calculo_ex2(TBM = df.INE.2019.HP[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 0:115)
+
+esp.Br.INE.2019.HP = calculo_ex2(TBM = df.INE.2019.HP[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 0:115,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2019.HP = merge(df.INE.2019.HP, esp.pred.INE.2019.HP, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2019.HP = merge(df.INE.2019.HP, esp.Br.INE.2019.HP, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+
+### AÑO 2020
+
+esp.pred.INE.2020.HP = calculo_ex2(TBM = df.INE.2020.HP[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 0:115)
+
+esp.Br.INE.2020.HP = calculo_ex2(TBM = df.INE.2020.HP[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 0:115,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2020.HP = merge(df.INE.2020.HP, esp.pred.INE.2020.HP, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2020.HP = merge(df.INE.2020.HP, esp.Br.INE.2020.HP, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+### AÑO 2021
+
+esp.pred.INE.2021.HP = calculo_ex2(TBM = df.INE.2021.HP[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 0:115)
+
+esp.Br.INE.2021.HP = calculo_ex2(TBM = df.INE.2021.HP[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 0:115,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2021.HP = merge(df.INE.2021.HP, esp.pred.INE.2021.HP, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2021.HP = merge(df.INE.2021.HP, esp.Br.INE.2021.HP, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+### AÑO 2022
+
+esp.pred.INE.2022.HP = calculo_ex2(TBM = df.INE.2022.HP[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 0:115)
+
+esp.Br.INE.2022.HP = calculo_ex2(TBM = df.INE.2022.HP[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 0:115,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2022.HP = merge(df.INE.2022.HP, esp.pred.INE.2022.HP, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2022.HP = merge(df.INE.2022.HP, esp.Br.INE.2022.HP, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+### AÑO 2023
+
+esp.pred.INE.2023.HP = calculo_ex2(TBM = df.INE.2023.HP[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 0:115)
+
+esp.Br.INE.2023.HP = calculo_ex2(TBM = df.INE.2023.HP[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 0:115,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2023.HP = merge(df.INE.2023.HP, esp.pred.INE.2023.HP, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2023.HP = merge(df.INE.2023.HP, esp.Br.INE.2023.HP, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+### AÑO 2024
+
+esp.pred.INE.2024.HP = calculo_ex2(TBM = df.INE.2024.HP[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 0:115)
+
+esp.Br.INE.2024.HP = calculo_ex2(TBM = df.INE.2024.HP[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 0:115,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2024.HP = merge(df.INE.2024.HP, esp.pred.INE.2024.HP, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2024.HP = merge(df.INE.2024.HP, esp.Br.INE.2024.HP, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+```
+
+#### AJUSTE 2)  GOMPERTZ 
+
+**Ley de Gompertz**
+
+Realizado solo en edades de 35 a 100 años de edad.
+
+```{r}
+
+### AÑO 2017
+
+df.INE.2017.Gmp = ajuste.curva.Gmp(edad.inicio = 35, 
+                                           edad.final = 100,
+                                           TBM = TBM.INE.2017, 
+                                           var = c("Hombre","Mujer"),
+                                           c = 0.0000001)[[1]]
+
+
+### AÑO 2018
+
+df.INE.2018.Gmp = ajuste.curva.Gmp(edad.inicio = 35, 
+                                           edad.final = 100,
+                                           TBM = TBM.INE.2018,
+                                           var = c("Hombre","Mujer"),
+                                           c = 0.0000001)[[1]]
+
+
+### AÑO 2019
+
+df.INE.2019.Gmp = ajuste.curva.Gmp(edad.inicio = 45, 
+                                           edad.final = 85,
+                                           TBM = TBM.INE.2019, 
+                                           var = c("Hombre","Mujer"),
+                                           c = 0.0000001)[[1]]
+
+
+### AÑO 2020
+
+df.INE.2020.Gmp = ajuste.curva.Gmp(edad.inicio = 35, 
+                                           edad.final = 100,
+                                           TBM = TBM.INE.2020, 
+                                           var = c("Hombre","Mujer"),
+                                           c = 0.0000001)[[1]]
+
+
+### AÑO 2021
+
+df.INE.2021.Gmp = ajuste.curva.Gmp(edad.inicio = 35, 
+                                           edad.final = 100,
+                                           TBM = TBM.INE.2021, 
+                                           var = c("Hombre","Mujer"),
+                                           c = 0.0000001)[[1]]
+
+
+### AÑO 2022
+
+df.INE.2022.Gmp = ajuste.curva.Gmp(edad.inicio = 35, 
+                                           edad.final = 100,
+                                           TBM = TBM.INE.2022,
+                                           var = c("Hombre","Mujer"),
+                                           c = 0.0000001)[[1]]
+
+
+### AÑO 2023
+
+df.INE.2023.Gmp = ajuste.curva.Gmp(edad.inicio = 35, 
+                                           edad.final = 100, 
+                                           TBM = TBM.INE.2023,
+                                           var = c("Hombre","Mujer"),
+                                           c = 0.0000001)[[1]]
+
+### AÑO 2024
+
+df.INE.2024.Gmp = ajuste.curva.Gmp(edad.inicio = 35, 
+                                           edad.final = 100,
+                                           TBM = TBM.INE.2024,
+                                           var = c("Hombre","Mujer"),
+                                           c = 0.0000001)[[1]]
+
+
+### AÑO 2025 - AÚN NO HAN LLEGADO LOS DATOS DE LAS DEFUNCIONES
+
+```
+
+
+**ESPERANZAS DE VIDA CON LA LEY DE GOMPERTZ**
+
+esp.pred = Esperanzas de vida calculadas a partir de las TBM ajustadas
+esp.Br = Esperanzas de vida calculadas a partir de las TBM previas al ajuste
+
+```{r}
+
+var1 = c("Pred-Hombre", "Pred-Mujer")
+
+var2 = c("Hombre", "Mujer") 
+
+### AÑO 2017
+
+esp.pred.INE.2017.Gmp = calculo_ex2(TBM = df.INE.2017.Gmp[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 35:100)
+
+esp.Br.INE.2017.Gmp = calculo_ex2(TBM = df.INE.2017.Gmp[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 35:100,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2017.Gmp = merge(df.INE.2017.Gmp, esp.pred.INE.2017.Gmp, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2017.Gmp = merge(df.INE.2017.Gmp, esp.Br.INE.2017.Gmp, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+
+### AÑO 2018
+
+esp.pred.INE.2018.Gmp = calculo_ex2(TBM = df.INE.2018.Gmp[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 35:100)
+
+esp.Br.INE.2018.Gmp = calculo_ex2(TBM = df.INE.2018.Gmp[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 35:100,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2018.Gmp = merge(df.INE.2018.Gmp, esp.pred.INE.2018.Gmp, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2018.Gmp = merge(df.INE.2018.Gmp, esp.Br.INE.2018.Gmp, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+### AÑO 2019
+
+esp.pred.INE.2019.Gmp = calculo_ex2(TBM = df.INE.2019.Gmp[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 35:100)
+
+esp.Br.INE.2019.Gmp = calculo_ex2(TBM = df.INE.2019.Gmp[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 45:85,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2019.Gmp = merge(df.INE.2019.Gmp, esp.pred.INE.2019.Gmp, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2019.Gmp = merge(df.INE.2019.Gmp, esp.Br.INE.2019.Gmp, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+
+### AÑO 2020
+
+esp.pred.INE.2020.Gmp = calculo_ex2(TBM = df.INE.2020.Gmp[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 35:100)
+
+esp.Br.INE.2020.Gmp = calculo_ex2(TBM = df.INE.2020.Gmp[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 35:100,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2020.Gmp = merge(df.INE.2020.Gmp, esp.pred.INE.2020.Gmp, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2020.Gmp = merge(df.INE.2020.Gmp, esp.Br.INE.2020.Gmp, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+### AÑO 2021
+
+esp.pred.INE.2021.Gmp = calculo_ex2(TBM = df.INE.2021.Gmp[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 35:100)
+
+esp.Br.INE.2021.Gmp = calculo_ex2(TBM = df.INE.2021.Gmp[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 35:100,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2021.Gmp = merge(df.INE.2021.Gmp, esp.pred.INE.2021.Gmp, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2021.Gmp = merge(df.INE.2021.Gmp, esp.Br.INE.2021.Gmp, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+### AÑO 2022
+
+esp.pred.INE.2022.Gmp = calculo_ex2(TBM = df.INE.2022.Gmp[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 35:100)
+
+esp.Br.INE.2022.Gmp = calculo_ex2(TBM = df.INE.2022.Gmp[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 35:100,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2022.Gmp = merge(df.INE.2022.Gmp, esp.pred.INE.2022.Gmp, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2022.Gmp = merge(df.INE.2022.Gmp, esp.Br.INE.2022.Gmp, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+### AÑO 2023
+
+esp.pred.INE.2023.Gmp = calculo_ex2(TBM = df.INE.2023.Gmp[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 35:100)
+
+esp.Br.INE.2023.Gmp = calculo_ex2(TBM = df.INE.2023.Gmp[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 35:100,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2023.Gmp = merge(df.INE.2023.Gmp, esp.pred.INE.2023.Gmp, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2023.Gmp = merge(df.INE.2023.Gmp, esp.Br.INE.2023.Gmp, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+### AÑO 2024
+
+esp.pred.INE.2024.Gmp = calculo_ex2(TBM = df.INE.2024.Gmp[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 35:100)
+
+esp.Br.INE.2024.Gmp = calculo_ex2(TBM = df.INE.2024.Gmp[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 35:100,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2024.Gmp = merge(df.INE.2024.Gmp, esp.pred.INE.2024.Gmp, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2024.Gmp = merge(df.INE.2024.Gmp, esp.Br.INE.2024.Gmp, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+```
+
+
+#### AJUSTE 3) GOMPERTZ-MAKEHAN 
+
+**Ajuste mediante Gompertz-Makeham**
+
+Realizado solo en edades de 35 a 100 años de edad.
+
+```{r}
+
+### AÑO 2017
+
+df.INE.2017.GM = ajuste.curva.GM(edad.inicio = 35,
+                                         edad.final = 100,
+                                         TBM = TBM.INE.2017,
+                                         var = c("Hombre","Mujer"),
+                                         c = 0.001)[[1]]
+
+
+### AÑO 2018
+
+df.INE.2018.GM = ajuste.curva.GM(edad.inicio = 35,
+                                         edad.final = 100,
+                                         TBM = TBM.INE.2018,
+                                         var = c("Hombre","Mujer"),
+                                         c = 0.001)[[1]]
+
+
+### AÑO 2019
+
+df.INE.2019.GM = ajuste.curva.GM(edad.inicio = 35,
+                                         edad.final = 100,
+                                         TBM = TBM.INE.2019,
+                                         var = c("Hombre","Mujer"),
+                                         c = 0.001)[[1]]
+
+
+### AÑO 2020
+
+df.INE.2020.GM = ajuste.curva.GM(edad.inicio = 35,
+                                         edad.final = 100,
+                                         TBM = TBM.INE.2020,
+                                         var = c("Hombre","Mujer"),
+                                         c = 0.001)[[1]]
+
+
+
+### AÑO 2021
+
+df.INE.2021.GM = ajuste.curva.GM(edad.inicio = 35,
+                                         edad.final = 100,
+                                         TBM = TBM.INE.2021,
+                                         var = c("Hombre","Mujer"),
+                                         c = 0.001)[[1]]
+
+
+
+### AÑO 2022
+
+df.INE.2022.GM = ajuste.curva.GM(edad.inicio = 35,
+                                         edad.final = 100,
+                                         TBM = TBM.INE.2022,
+                                         var = c("Hombre","Mujer"),
+                                         c = 0.001)[[1]]
+
+
+
+### AÑO 2023
+
+df.INE.2023.GM = ajuste.curva.GM(edad.inicio = 35,
+                                         edad.final = 100,
+                                         TBM = TBM.INE.2023,
+                                         var = c("Hombre","Mujer"),
+                                         c = 0.001)[[1]]
+
+
+
+### AÑO 2024
+
+df.INE.2024.GM = ajuste.curva.GM(edad.inicio = 35,
+                                         edad.final = 100,
+                                         TBM = TBM.INE.2024,
+                                         var = c("Hombre","Mujer"),
+                                         c = 0.001)[[1]]
+
+
+
+### AÑO 2025 - AÚN NO HAN LLEGADO LOS DATOS DE LAS DEFUNCIONES
+
+```
+
+**ESPERANZAS DE VIDA CON GOMPERTZ-MAKEHAM**
+
+esp.pred = Esperanzas de vida calculadas a partir de las TBM ajustadas
+esp.Br = Esperanzas de vida calculadas a partir de las TBM previas al ajuste
+
+```{r}
+
+var1 = c("Pred-Hombre", "Pred-Mujer")
+
+var2 = c("Hombre", "Mujer") 
+
+### AÑO 2017
+
+esp.pred.INE.2017.GM = calculo_ex2(TBM = df.INE.2017.GM[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 35:100)
+
+esp.Br.INE.2017.GM = calculo_ex2(TBM = df.INE.2017.GM[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 35:100,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2017.GM = merge(df.INE.2017.GM, esp.pred.INE.2017.GM, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2017.GM = merge(df.INE.2017.GM, esp.Br.INE.2017.GM, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+
+### AÑO 2018
+
+esp.pred.INE.2018.GM = calculo_ex2(TBM = df.INE.2018.GM[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 35:100)
+
+esp.Br.INE.2018.GM = calculo_ex2(TBM = df.INE.2018.GM[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 35:100,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2018.GM = merge(df.INE.2018.GM, esp.pred.INE.2018.GM, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2018.GM = merge(df.INE.2018.GM, esp.Br.INE.2018.GM, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+### AÑO 2019
+
+esp.pred.INE.2019.GM = calculo_ex2(TBM = df.INE.2019.GM[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 35:100)
+
+esp.Br.INE.2019.GM = calculo_ex2(TBM = df.INE.2019.GM[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 35:100,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2019.GM = merge(df.INE.2019.GM, esp.pred.INE.2019.GM, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2019.GM = merge(df.INE.2019.GM, esp.Br.INE.2019.GM, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+
+### AÑO 2020
+
+esp.pred.INE.2020.GM = calculo_ex2(TBM = df.INE.2020.GM[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 35:100)
+
+esp.Br.INE.2020.GM = calculo_ex2(TBM = df.INE.2020.GM[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 35:100,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2020.GM = merge(df.INE.2020.GM, esp.pred.INE.2020.GM, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2020.GM = merge(df.INE.2020.GM, esp.Br.INE.2020.GM, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+### AÑO 2021
+
+esp.pred.INE.2021.GM = calculo_ex2(TBM = df.INE.2021.GM[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 35:100)
+
+esp.Br.INE.2021.GM = calculo_ex2(TBM = df.INE.2021.GM[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 35:100,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2021.GM = merge(df.INE.2021.GM, esp.pred.INE.2021.GM, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2021.GM = merge(df.INE.2021.GM, esp.Br.INE.2021.GM, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+### AÑO 2022
+
+esp.pred.INE.2022.GM = calculo_ex2(TBM = df.INE.2022.GM[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 35:100)
+
+esp.Br.INE.2022.GM = calculo_ex2(TBM = df.INE.2022.GM[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 35:100,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2022.GM = merge(df.INE.2022.GM, esp.pred.INE.2022.GM, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2022.GM = merge(df.INE.2022.GM, esp.Br.INE.2022.GM, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+### AÑO 2023
+
+esp.pred.INE.2023.GM = calculo_ex2(TBM = df.INE.2023.GM[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 35:100)
+
+esp.Br.INE.2023.GM = calculo_ex2(TBM = df.INE.2023.GM[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 35:100,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2023.GM = merge(df.INE.2023.GM, esp.pred.INE.2023.GM, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2023.GM = merge(df.INE.2023.GM, esp.Br.INE.2023.GM, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+### AÑO 2024
+
+esp.pred.INE.2024.GM = calculo_ex2(TBM = df.INE.2024.GM[, c("Edad", var1)], 
+                                           var = var1, 
+                                           edades = 35:100)
+
+esp.Br.INE.2024.GM = calculo_ex2(TBM = df.INE.2024.GM[, c("Edad", var2)],
+                                 var = var2,
+                                 edades = 35:100,
+                                 titl = "Br")
+
+# Juntamos las dos estimaciones de las esperanzas de vida en un mismo objeto
+
+df.INE.2024.GM = merge(df.INE.2024.GM, esp.pred.INE.2024.GM, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2024.GM = merge(df.INE.2024.GM, esp.Br.INE.2024.GM, 
+                               by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+```
+
+### PASO FINAL) EXPORTACIÓN DE LOS RESULTADOS
+
+*5o paso*: Por último, se procederá a exportar todas las tablas de mortalidad calculadas a su respectiva tabla Excel. Cada ajuste tendrá su propia tabla de mortalidad.
+
+
+```{r}
+
+### AÑO 2017
+
+colnames(df.INE.2017.HP) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h",
+                                              "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".HP"))
+colnames(df.INE.2017.Gmp) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h", "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".Gmp"))
+colnames(df.INE.2017.GM) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h", "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".GM"))
+
+df.INE.2017 = merge(df.INE.2017.HP, df.INE.2017.Gmp, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2017 = merge(df.INE.2017, df.INE.2017.GM, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+### AÑO 2018
+
+colnames(df.INE.2018.HP) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h", "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".HP"))
+colnames(df.INE.2018.Gmp) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h", "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".Gmp"))
+colnames(df.INE.2018.GM) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h", "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".GM"))
+
+df.INE.2018 = merge(df.INE.2018.HP, df.INE.2018.Gmp, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2018 = merge(df.INE.2018, df.INE.2018.GM, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+### AÑO 2019
+
+colnames(df.INE.2019.HP) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h", "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".HP"))
+colnames(df.INE.2019.Gmp) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h", "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".Gmp"))
+colnames(df.INE.2019.GM) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h", "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".GM"))
+
+df.INE.2019 = merge(df.INE.2019.HP, df.INE.2019.Gmp, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2019 = merge(df.INE.2019, df.INE.2019.GM, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+### AÑO 2020
+
+colnames(df.INE.2020.HP) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h", "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".HP"))
+colnames(df.INE.2020.Gmp) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h", "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".Gmp"))
+colnames(df.INE.2020.GM) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h", "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".GM"))
+
+df.INE.2020 = merge(df.INE.2020.HP, df.INE.2020.Gmp, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2020 = merge(df.INE.2020, df.INE.2020.GM, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+### AÑO 2021
+
+colnames(df.INE.2021.HP) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h", "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".HP"))
+colnames(df.INE.2021.Gmp) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h", "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".Gmp"))
+colnames(df.INE.2021.GM) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h", "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".GM"))
+
+df.INE.2021 = merge(df.INE.2021.HP, df.INE.2021.Gmp, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2021 = merge(df.INE.2021, df.INE.2021.GM, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+### AÑO 2022
+
+colnames(df.INE.2022.HP) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h", "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".HP"))
+colnames(df.INE.2022.Gmp) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h", "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".Gmp"))
+colnames(df.INE.2022.GM) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h", "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".GM"))
+
+df.INE.2022 = merge(df.INE.2022.HP, df.INE.2022.Gmp, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2022 = merge(df.INE.2022, df.INE.2022.GM, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+### AÑO 2023
+
+colnames(df.INE.2023.HP) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h", "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".HP"))
+colnames(df.INE.2023.Gmp) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h", "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".Gmp"))
+colnames(df.INE.2023.GM) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h", "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".GM"))
+
+df.INE.2023 = merge(df.INE.2023.HP, df.INE.2023.Gmp, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2023 = merge(df.INE.2023, df.INE.2023.GM, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+### AÑO 2024
+
+colnames(df.INE.2024.HP) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h", "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".HP"))
+colnames(df.INE.2024.Gmp) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h", "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".Gmp"))
+colnames(df.INE.2024.GM) = c("Edad", paste0(c("qx_h", "qx_m", "log_qx_h","log_qx_m","Pred_qx_h", "Pred_qx_m","Ex_h","Ex_m", "ExBr_h", "ExBr_m"),".GM"))
+
+df.INE.2024 = merge(df.INE.2024.HP, df.INE.2024.Gmp, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+df.INE.2024 = merge(df.INE.2024, df.INE.2024.GM, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+write_xlsx(
+    list(
+     Año2017 = df.INE.2017,
+     Año2018 = df.INE.2018,
+     Año2019 = df.INE.2019,
+     Año2020 = df.INE.2020,
+     Año2021 = df.INE.2021,
+     Año2022 = df.INE.2022,
+     Año2023 = df.INE.2023,
+     Año2024 = df.INE.2024
+      
+   ),
+   path = paste0("./","Tabla_Mortalidad_INE",".xlsx")       
+) 
+
+# exportacion.xlsx(TBM1 = df.residencial.2025, TBM2 = df.domicilio.2025, year.XXXX = "2025", ajuste.yy = "HP") # Datos aún no disponibles
+
+save.image("Datos/TFG7_Datos.RData")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,1177 @@
+---
+title: "Lectura de datos"
+author: "Jordi Gascons i Cambra"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### INTRODUCCIÓN
+
+Este Script tiene como objetivo principal preparar los datos para futuros análisis. En primer lugar se procederá a la importación de las diferentes tablas de datos, posteriormente se preprocesarán, y finalmente se exportarán en formato Excel i Rdata.
+
+### INICIALIZACIÓN
+
+El primer paso es la carga e instalación de las librerías R necesarias para realizar el estudio e imprescindibles para la ejecución del Script y futuros Scripts.
+
+**Listado de las librerías**
+
+- sqldf
+- dplyr
+- ggplot2
+- readxl
+- writexl
+- gridExtra
+- reshape2
+- zoo
+- MortalityLaws
+- xlsx
+
+```{r, warning = FALSE, message = FALSE, include = FALSE}
+
+### CargaIInstalación de las librerías
+
+# install.packages("sqldf")
+# install.packages("dplyr")
+# install.packages("ggplot2")
+# install.packages("readxl")
+# install.packages("writexl")
+# install.packages("gridExtra")
+# install.packages("reshape2")
+# install.packages("zoo")
+# install.packages("MortalityLaws")
+# install.packages("xlsx")
+# install.packages("minpack.lm")
+
+library(sqldf)
+library(dplyr)
+library(ggplot2)
+library(readxl)
+library(writexl)
+library(gridExtra)
+library(reshape2)
+library(zoo)
+library(MortalityLaws)
+library(xlsx)
+library(minpack.lm)
+
+```
+
+El **directorio de trabajo** es personal i distinto para cada persona. Para que la ejecución del Script se complete sin incidencias es importante establir como directorio esa ruta donde se guardan los diferentes datos procedentes de la IMSERSO y las diferentes carpetas a usar.
+
+```{r, warning = FALSE, message = FALSE, include = FALSE}
+
+### Establicimiento del directorio de trabajo
+
+setwd("C:/Users/Jordi/Desktop/Universitat/TFG/TFG - Jordi/Códigos R")
+getwd()
+```
+
+### LECTURA DE LOS DATOS
+
+A continuación, se procederá a la lectura de los datos de este proyecto.
+
+**Listado del conjunto de bases de datos**
+
+- informe_atencion_residencial_vivos (años 2017 al 2025)
+- informe_atencion_residencial_fallec (años 2017 al 2024)
+- informe_apoyo_domicilio_vivos (años 2017 al 2025)
+- informe_apoyo_domicilio_fallec (años 2017 al 2024)
+- población INE (años 2017 al 2023)
+- tasas de mortalidad (años 2017 al 2023)
+- Defunciones INE (años 2017 al 2024)
+
+Para el año 2024, se ha utilizado una base de datos ajustada de defunciones (informe_atencion_residencial_fallec_v2; informe_apoyo_domicilio_fallec_v2)
+
+**Procedencia de los datos**
+
+Las bases de datos sobre el tipo de atención a personas con algun grado de dependencia reconocido son obtenidas y proporcionadas a través de la IMSERSO. Los registros de población i tasas de mortalidad se obtienen a través del Instituto Nacional de Estadística (INE).
+
+**Aclariments (a revisar de cares al futur)**
+
+- Les taxes de mortalitat de l'any 2024 no estan disponibles, estan previstes de cares a finals de l'any 2025.
+- Els cens de població dels anys 2024 i 2025 no estan disponibles, s'han de descarregar quan ho estiguin.
+- Els cens de població que sí estan disponibles (any 2017 fins l'any 2023) s'han d'actualitzar tornant-los a descarregar de l'INE per si hi ha hagut cap modificació.
+
+```{r, message=FALSE}
+
+### SE PROCEDE A LA LECTURA DE LOS DATOS ###
+
+### Tasa de mortalidad
+
+tasa_mortalidad_2017 = read_xlsx("./Datos/pop_2017.xlsx", range = "A9:D110")
+tasa_mortalidad_2018 = read_xlsx("./Datos/pop_2018.xlsx", range = "A9:D110")
+tasa_mortalidad_2019 = read_xlsx("./Datos/pop_2019.xlsx", range = "A9:D110")
+tasa_mortalidad_2020 = read_xlsx("./Datos/pop_2020.xlsx", range = "A9:D110")
+tasa_mortalidad_2021 = read_xlsx("./Datos/pop_2021.xlsx", range = "A9:D110")
+tasa_mortalidad_2022 = read_xlsx("./Datos/pop_2022.xlsx", range = "A9:D110")
+tasa_mortalidad_2023 = read_xlsx("./Datos/pop_2023.xlsx", range = "A9:D110")
+# tasa_mortalidad_2024 # Falta este año (aún no disponible)
+
+### Población INE 
+
+pop_2017 = read_xlsx("./Datos/pop_ine_2017.xlsx")
+pop_2018 = read_xlsx("./Datos/pop_ine_2018.xlsx")
+pop_2019 = read_xlsx("./Datos/pop_ine_2019.xlsx")
+pop_2020 = read_xlsx("./Datos/pop_ine_2020.xlsx")
+pop_2021 = read_xlsx("./Datos/pop_ine_2021.xlsx")
+pop_2022 = read_xlsx("./Datos/pop_ine_2022.xlsx")
+pop_2023 = read_xlsx("./Datos/pop_ine_2023.xlsx")
+pop_2024 = read_xlsx("./Datos/pop_ine_2024.xlsx")
+pop_2025 = read_xlsx("./Datos/pop_ine_2025.xlsx")
+
+
+### Defunciones INE
+
+def = read_xlsx("./Datos/defunciones_INE_04052026.xlsx", range = "A9:Q110")
+
+def_2017 = def[, c(1,9,17)] # defunciones año 2017
+def_2018 = def[, c(1,8,16)] # defunciones año 2018
+def_2019 = def[, c(1,7,15)] # defunciones año 2019
+def_2020 = def[, c(1,6,14)] # defunciones año 2020
+def_2021 = def[, c(1,5,13)] # defunciones año 2021
+def_2022 = def[, c(1,4,12)] # defunciones año 2022
+def_2023 = def[, c(1,3,11)] # defunciones año 2023
+def_2024 = def[, c(1,2,10)] # defunciones año 2024
+
+
+### Datos IMSERSO - Atención apoyo residencial (registro total)
+
+atencion_residencial_vivos_2017 = read_xlsx("./Datos/[BI]informe_atencion_residencial_vivos.xlsx", sheet = "2017", range = "A5:I119")
+atencion_residencial_vivos_2018 = read_xlsx("./Datos/[BI]informe_atencion_residencial_vivos.xlsx", sheet = "2018", range = "A5:K122")
+atencion_residencial_vivos_2019 = read_xlsx("./Datos/[BI]informe_atencion_residencial_vivos.xlsx", sheet = "2019", range = "A5:G123")
+atencion_residencial_vivos_2020 = read_xlsx("./Datos/[BI]informe_atencion_residencial_vivos.xlsx", sheet = "2020", range = "A5:G120")
+atencion_residencial_vivos_2021 = read_xlsx("./Datos/[BI]informe_atencion_residencial_vivos.xlsx", sheet = "2021", range = "A5:G123")
+atencion_residencial_vivos_2022 = read_xlsx("./Datos/[BI]informe_atencion_residencial_vivos.xlsx", sheet = "2022", range = "A5:H124")
+atencion_residencial_vivos_2023 = read_xlsx("./Datos/[BI]informe_atencion_residencial_vivos.xlsx", sheet = "2023", range = "A5:G123")
+atencion_residencial_vivos_2024 = read_xlsx("./Datos/informe_atencion_residencial_vivos_2024.xlsx", range = "A5:G120")
+atencion_residencial_vivos_2025 = read_xlsx("./Datos/informe_atencion_residencial_vivos_2025.xlsx", range = "A5:G122")
+
+### Datos IMSERSO - Atenció apoyo residencial (defunciones)
+
+atencion_residencial_fallec_2017 = read_xlsx("./Datos/[BI]informe_atencion_residencial_fallec.xlsx", sheet = "2017", range = "A5:H107")
+atencion_residencial_fallec_2018 = read_xlsx("./Datos/[BI]informe_atencion_residencial_fallec.xlsx", sheet = "2018", range = "A5:I106")
+atencion_residencial_fallec_2019 = read_xlsx("./Datos/[BI]informe_atencion_residencial_fallec.xlsx", sheet = "2019", range = "A5:G107")
+atencion_residencial_fallec_2020 = read_xlsx("./Datos/[BI]informe_atencion_residencial_fallec.xlsx", sheet = "2020", range = "A5:G106")
+atencion_residencial_fallec_2021 = read_xlsx("./Datos/[BI]informe_atencion_residencial_fallec.xlsx", sheet = "2021", range = "A5:G98")
+atencion_residencial_fallec_2022 = read_xlsx("./Datos/[BI]informe_atencion_residencial_fallec.xlsx", sheet = "2022", range = "A5:G100")
+atencion_residencial_fallec_2023 = read_xlsx("./Datos/informe_atencion_residencial_fallec_2023.xlsx", range = "A5:G105")
+atencion_residencial_fallec_2024 = read_xlsx("./Datos/informe_atencion_residencial_fallec_2024_v2.xlsx", range = "A5:G100")
+
+### Datos IMSERSO - Atención apoyo a domicili (registro total)
+
+atencion_domicilio_vivos_2017 = read_xlsx("./Datos/[BI]informe_apoyo_domicilio_vivos.xlsx", sheet = "2017", range = "A5:L127")
+atencion_domicilio_vivos_2018 = read_xlsx("./Datos/[BI]informe_apoyo_domicilio_vivos.xlsx", sheet = "2018", range = "A5:L128")
+atencion_domicilio_vivos_2019 = read_xlsx("./Datos/[BI]informe_apoyo_domicilio_vivos.xlsx", sheet = "2019", range = "A5:I129")
+atencion_domicilio_vivos_2020 = read_xlsx("./Datos/[BI]informe_apoyo_domicilio_vivos.xlsx", sheet = "2020", range = "A5:G126")
+atencion_domicilio_vivos_2021 = read_xlsx("./Datos/[BI]informe_apoyo_domicilio_vivos.xlsx", sheet = "2021", range = "A5:I125")
+atencion_domicilio_vivos_2022 = read_xlsx("./Datos/[BI]informe_apoyo_domicilio_vivos.xlsx", sheet = "2022", range = "A5:I126")
+atencion_domicilio_vivos_2023 = read_xlsx("./Datos/[BI]informe_apoyo_domicilio_vivos.xlsx", sheet = "2023", range = "A5:H118")
+atencion_domicilio_vivos_2024 = read_xlsx("./Datos/informe_apoyo_domicilio_vivos_2024.xlsx", range = "A5:G119")
+atencion_domicilio_vivos_2025 = read_xlsx("./Datos/informe_apoyo_domicilio_vivos_2025.xlsx", range = "A5:H120")
+
+### Datos IMSERSO - Atención apoyo a domicilio (registro de defunciones)
+
+atencion_domicilio_fallec_2017 = read_xlsx("./Datos/[BI]informe_apoyo_domicilio_fallec.xlsx", sheet = "2017", range = "A5:I121")
+atencion_domicilio_fallec_2018 = read_xlsx("./Datos/[BI]informe_apoyo_domicilio_fallec.xlsx", sheet = "2018", range = "A5:J121")
+atencion_domicilio_fallec_2019 = read_xlsx("./Datos/[BI]informe_apoyo_domicilio_fallec.xlsx", sheet = "2019", range = "A5:H125")
+atencion_domicilio_fallec_2020 = read_xlsx("./Datos/[BI]informe_apoyo_domicilio_fallec.xlsx", sheet = "2020", range = "A5:G119")
+atencion_domicilio_fallec_2021 = read_xlsx("./Datos/[BI]informe_apoyo_domicilio_fallec.xlsx", sheet = "2021", range = "A5:G122")
+atencion_domicilio_fallec_2022 = read_xlsx("./Datos/[BI]informe_apoyo_domicilio_fallec.xlsx", sheet = "2022", range = "A5:G119")
+atencion_domicilio_fallec_2023 = read_xlsx("./Datos/informe_apoyo_domicilio_fallec_2023.xlsx", range = "A4:G118")
+atencion_domicilio_fallec_2024 = read_xlsx("./Datos/informe_apoyo_domicilio_fallec_2024_v2.xlsx", range = "A5:G117")
+
+```
+
+
+### PREPROCESAMIENTO DE LOS DATOS
+
+**Transformaciones/Preprocesamiento a realizar**
+
+Todas las tablas importadas con datos procedentes de la IMSERSO han sido sometidas al siguiente conjunto de modificaciones con el simple fin de aclarir su contenido (pero haciendo constatar que en ningún momento se ha modificado o alterado el contenido que los datos proporcionaban inicialmente). 
+
+Transformaciones realizadas:
+
+- Todas las tablas de datos comparten en estructura y significado un conjunto de variables, pero estan nombradas de forma distinta. Se procede a unificar de forma estandizada el nombre de las variables, tal que:
+
+**edad**, **Hombre-Grado.I, Hombre-Grado.II, Hombre-Grado.III, Mujer-Grado.I, Mujer-Grado.II y Mujer-Grado.III** (determina el sexo i grado de dependencia del registro).
+
+SE OMITIRAN TODAS AQUELLAS VARIABLES QUE NO SE ENCUENTREN EN ESTE SUBCONJUNTO ANTERIOR DE VARIABLES. Es decir, las variables **Nulo-Grado.I, Nulo-Grado.II y Nulo-Grado.III, entre otras** seran renombradas pero no se tendrán en cuenta en el análisis (en principio). 
+
+- Se ha considerado convertir todos los valores NA de las tablas en 0s debido a que en el proceso de la lectura de datos utilizando R un valor original de 0 es leido de manera predeterminada como un valor NA o faltante. 
+
+- En los datos de l'INE i de las tasa de mortalidad se han nombrado las variables de la siguiente manera: **Edad, Hombre, Mujer y Todos**. 
+
+**Advertències (fet!!)**
+
+- S'ha de comprovar que cap valor NA hagi estat eliminat per error al reconvertir-los en 0s amb l'R. Cal repassar les taules i les observacions en detall i assegurar-se que no hi ha valors NAs, i en cas d'haver-n'hi, anotar de quina observació es tracta i reconvertir aquella observació en concret en NA, ja que no es tracta de 0.
+
+
+
+```{r}
+
+var.seleccionadas = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+
+
+### ATENCIÓN RESIDENCIAL (registro total) ###
+
+### Atención residencial total en el año 2017
+
+atencion_residencial_vivos_2017 = data.frame(atencion_residencial_vivos_2017) 
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III","Nulo-Grado.II","Nulo-Grado.III")
+names(atencion_residencial_vivos_2017) = variables
+
+atencion_residencial_vivos_2017[is.na(atencion_residencial_vivos_2017)] = 0
+atencion_residencial_vivos_2017 = atencion_residencial_vivos_2017[, var.seleccionadas]
+
+### Atención residencial total en el año 2018
+
+atencion_residencial_vivos_2018 = data.frame(atencion_residencial_vivos_2018) 
+
+variables = c("Edad","Hombre-NoDep","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Nodep","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III","Nulo-Grado.II","Nulo-Grado.III")
+names(atencion_residencial_vivos_2018) = variables
+
+atencion_residencial_vivos_2018[is.na(atencion_residencial_vivos_2018)] = 0
+atencion_residencial_vivos_2018 = atencion_residencial_vivos_2018[, var.seleccionadas]
+
+### Atención residencial total en el año 2019
+
+atencion_residencial_vivos_2019 = data.frame(atencion_residencial_vivos_2019) 
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_residencial_vivos_2019) = variables
+
+atencion_residencial_vivos_2019[is.na(atencion_residencial_vivos_2019)] = 0
+atencion_residencial_vivos_2019 = atencion_residencial_vivos_2019[, var.seleccionadas]
+
+### Atención residencial total en el año 2020
+
+atencion_residencial_vivos_2020 = data.frame(atencion_residencial_vivos_2020) 
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_residencial_vivos_2020) = variables
+
+atencion_residencial_vivos_2020[is.na(atencion_residencial_vivos_2020)] = 0
+atencion_residencial_vivos_2020 = atencion_residencial_vivos_2020[, var.seleccionadas]
+
+### Atención residencial total en el año 2021
+
+atencion_residencial_vivos_2021 = data.frame(atencion_residencial_vivos_2021) 
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_residencial_vivos_2021) = variables
+
+atencion_residencial_vivos_2021[is.na(atencion_residencial_vivos_2021)] = 0
+atencion_residencial_vivos_2021 = atencion_residencial_vivos_2021[, var.seleccionadas]
+
+### Atención residencial total en el año 2022
+
+atencion_residencial_vivos_2022 = data.frame(atencion_residencial_vivos_2022) 
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Nodep","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_residencial_vivos_2022) = variables
+
+atencion_residencial_vivos_2022[is.na(atencion_residencial_vivos_2022)] = 0
+atencion_residencial_vivos_2022 = atencion_residencial_vivos_2022[, var.seleccionadas]
+
+### Atención residencial total en el año 2023
+
+atencion_residencial_vivos_2023 = data.frame(atencion_residencial_vivos_2023) 
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_residencial_vivos_2023) = variables
+
+atencion_residencial_vivos_2023[is.na(atencion_residencial_vivos_2023)] = 0
+atencion_residencial_vivos_2023 = atencion_residencial_vivos_2023[, var.seleccionadas]
+
+### Atención residencial total en el año 2024
+
+atencion_residencial_vivos_2024 = data.frame(atencion_residencial_vivos_2024) 
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_residencial_vivos_2024) = variables
+
+atencion_residencial_vivos_2024[is.na(atencion_residencial_vivos_2024)] = 0
+atencion_residencial_vivos_2024 = atencion_residencial_vivos_2024[, var.seleccionadas]
+
+### Atención residencial total en el año 2025
+
+atencion_residencial_vivos_2025 = data.frame(atencion_residencial_vivos_2025) 
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_residencial_vivos_2025) = variables
+
+atencion_residencial_vivos_2025[is.na(atencion_residencial_vivos_2025)] = 0
+atencion_residencial_vivos_2025 = atencion_residencial_vivos_2025[, var.seleccionadas]
+
+
+### ATENCIÓN RESIDENCIAL (registro defunciones) ###
+
+### Atención residencial defunciones el año 2017
+
+atencion_residencial_fallec_2017 = data.frame(atencion_residencial_fallec_2017) 
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III","Nulo-Grado.III")
+names(atencion_residencial_fallec_2017) = variables
+
+atencion_residencial_fallec_2017[is.na(atencion_residencial_fallec_2017)] = 0
+atencion_residencial_fallec_2017 = atencion_residencial_fallec_2017[, var.seleccionadas]
+
+### Atención residencial defunciones el año 2018
+
+atencion_residencial_fallec_2018 = data.frame(atencion_residencial_fallec_2018) 
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-NoDep","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III","Nulo-Grado.II")
+names(atencion_residencial_fallec_2018) = variables
+
+atencion_residencial_fallec_2018[is.na(atencion_residencial_fallec_2018)] = 0
+atencion_residencial_fallec_2018 = atencion_residencial_fallec_2018[, var.seleccionadas]
+
+### Atención residencial defunciones el año 2019
+
+atencion_residencial_fallec_2019 = data.frame(atencion_residencial_fallec_2019) 
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_residencial_fallec_2019) = variables
+
+atencion_residencial_fallec_2019[is.na(atencion_residencial_fallec_2019)] = 0
+atencion_residencial_fallec_2019 = atencion_residencial_fallec_2019[, var.seleccionadas]
+
+### Atención residencial defunciones el año 2020
+
+atencion_residencial_fallec_2020 = data.frame(atencion_residencial_fallec_2020) 
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_residencial_fallec_2020) = variables
+
+atencion_residencial_fallec_2020[is.na(atencion_residencial_fallec_2020)] = 0
+atencion_residencial_fallec_2020 = atencion_residencial_fallec_2020[, var.seleccionadas]
+
+### Atención residencial defunciones el año 2021
+
+atencion_residencial_fallec_2021 = data.frame(atencion_residencial_fallec_2021) 
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_residencial_fallec_2021) = variables
+
+atencion_residencial_fallec_2021[is.na(atencion_residencial_fallec_2021)] = 0
+atencion_residencial_fallec_2021 = atencion_residencial_fallec_2021[, var.seleccionadas]
+
+### Atención residencial defunciones el año 2022
+
+atencion_residencial_fallec_2022 = data.frame(atencion_residencial_fallec_2022) 
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_residencial_fallec_2022) = variables
+
+atencion_residencial_fallec_2022[is.na(atencion_residencial_fallec_2022)] = 0
+atencion_residencial_fallec_2022 = atencion_residencial_fallec_2022[, var.seleccionadas]
+
+### Atención residencial defunciones el año 2023
+
+atencion_residencial_fallec_2023 = data.frame(atencion_residencial_fallec_2023) 
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_residencial_fallec_2023) = variables
+
+atencion_residencial_fallec_2023[is.na(atencion_residencial_fallec_2023)] = 0
+atencion_residencial_fallec_2023 = atencion_residencial_fallec_2023[, var.seleccionadas]
+
+### Atención residencial defunciones el año 2024
+
+atencion_residencial_fallec_2024 = data.frame(atencion_residencial_fallec_2024) 
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_residencial_fallec_2024) = variables
+
+atencion_residencial_fallec_2024[is.na(atencion_residencial_fallec_2024)] = 0
+atencion_residencial_fallec_2024 = atencion_residencial_fallec_2024[, var.seleccionadas]
+
+
+### ATENCIÓN APOYO A DOMICILIO (registro total) ###
+
+### Atención apoyo a domicilio el año 2017
+
+atencion_domicilio_vivos_2017 = data.frame(atencion_domicilio_vivos_2017)
+
+variables = c("Edad","Hombre-NoDep","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-NoDep","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III","Nulo-Grado.I","Nulo-Grado.II","Nulo-Grado.III")
+names(atencion_domicilio_vivos_2017) = variables
+
+atencion_domicilio_vivos_2017[is.na(atencion_domicilio_vivos_2017)] = 0
+atencion_domicilio_vivos_2017 = atencion_domicilio_vivos_2017[, var.seleccionadas]
+
+### Atención apoyo a domicilio el año 2018
+
+atencion_domicilio_vivos_2018 = data.frame(atencion_domicilio_vivos_2018)
+
+variables = c("Edad","Hombre-NoDep","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-NoDep","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III","Nulo-Grado.I","Nulo-Grado.II","Nulo-Grado.III")
+names(atencion_domicilio_vivos_2018) = variables
+
+atencion_domicilio_vivos_2018[is.na(atencion_domicilio_vivos_2018)] = 0
+atencion_domicilio_vivos_2018 = atencion_domicilio_vivos_2018[, var.seleccionadas]
+
+### Atención apoyo a domicilio el año 2019
+
+atencion_domicilio_vivos_2019 = data.frame(atencion_domicilio_vivos_2019)
+
+variables = c("Edad","Hombre-NoDep","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-NoDep","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_domicilio_vivos_2019) = variables
+
+atencion_domicilio_vivos_2019[is.na(atencion_domicilio_vivos_2019)] = 0
+atencion_domicilio_vivos_2019 = atencion_domicilio_vivos_2019[, var.seleccionadas]
+
+### Atención apoyo a domicilio el año 2020
+
+atencion_domicilio_vivos_2020 = data.frame(atencion_domicilio_vivos_2020)
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_domicilio_vivos_2020) = variables
+
+atencion_domicilio_vivos_2020[is.na(atencion_domicilio_vivos_2020)] = 0
+atencion_domicilio_vivos_2020 = atencion_domicilio_vivos_2020[, var.seleccionadas]
+
+### Atención apoyo a domicilio el año 2021
+
+atencion_domicilio_vivos_2021 = data.frame(atencion_domicilio_vivos_2021)
+
+variables = c("Edad","Hombre-NoDep","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-NoDep","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_domicilio_vivos_2021) = variables
+
+atencion_domicilio_vivos_2021[is.na(atencion_domicilio_vivos_2021)] = 0
+atencion_domicilio_vivos_2021 = atencion_domicilio_vivos_2021[, var.seleccionadas]
+
+### Atención apoyo a domicilio el año 2022
+
+atencion_domicilio_vivos_2022 = data.frame(atencion_domicilio_vivos_2022)
+
+variables = c("Edad","Hombre-NoDep","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-NoDep","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_domicilio_vivos_2022) = variables
+
+atencion_domicilio_vivos_2022[is.na(atencion_domicilio_vivos_2022)] = 0
+atencion_domicilio_vivos_2022 = atencion_domicilio_vivos_2022[, var.seleccionadas]
+
+### Atención apoyo a domicilio el año 2023
+
+atencion_domicilio_vivos_2023 = data.frame(atencion_domicilio_vivos_2023)
+
+variables = c("Edad","Hombre-NoDep","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_domicilio_vivos_2023) = variables
+
+atencion_domicilio_vivos_2023[is.na(atencion_domicilio_vivos_2023)] = 0
+atencion_domicilio_vivos_2023 = atencion_domicilio_vivos_2023[, var.seleccionadas]
+
+### Atención apoyo a domicilio el año 2024
+
+atencion_domicilio_vivos_2024 = data.frame(atencion_domicilio_vivos_2024)
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_domicilio_vivos_2024) = variables
+
+atencion_domicilio_vivos_2024[is.na(atencion_domicilio_vivos_2024)] = 0
+atencion_domicilio_vivos_2024 = atencion_domicilio_vivos_2024[, var.seleccionadas]
+
+### Atención apoyo a domicilio el año 2025
+
+atencion_domicilio_vivos_2025 = data.frame(atencion_domicilio_vivos_2025)
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-NoDep","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_domicilio_vivos_2025) = variables
+
+atencion_domicilio_vivos_2025[is.na(atencion_domicilio_vivos_2025)] = 0
+atencion_domicilio_vivos_2025 = atencion_domicilio_vivos_2025[, var.seleccionadas]
+
+
+### ATENCIÓN APOYO A DOMICILIO (registro de defunciones) ###
+
+### Atención apoyo a domicilio defunciones  el año 2017
+
+atencion_domicilio_fallec_2017 = data.frame(atencion_domicilio_fallec_2017)
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III","Nulo-Grado.II","Nulo-Grado.III")
+names(atencion_domicilio_fallec_2017) = variables
+
+atencion_domicilio_fallec_2017[is.na(atencion_domicilio_fallec_2017)] = 0
+atencion_domicilio_fallec_2017 = atencion_domicilio_fallec_2017[, var.seleccionadas]
+
+### Atención apoyo a domicilio defunciones  el año 2018
+
+atencion_domicilio_fallec_2018 = data.frame(atencion_domicilio_fallec_2018)
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-NoDep","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III","Nulo-Grado.II","Nulo-Grado.III")
+names(atencion_domicilio_fallec_2018) = variables
+
+atencion_domicilio_fallec_2018[is.na(atencion_domicilio_fallec_2018)] = 0
+atencion_domicilio_fallec_2018 = atencion_domicilio_fallec_2018[, var.seleccionadas]
+
+### Atención apoyo a domicilio defunciones  el año 2019
+
+atencion_domicilio_fallec_2019 = data.frame(atencion_domicilio_fallec_2019)
+
+variables = c("Edad","Hombre-NoDep","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_domicilio_fallec_2019) = variables
+
+atencion_domicilio_fallec_2019[is.na(atencion_domicilio_fallec_2019)] = 0
+atencion_domicilio_fallec_2019 = atencion_domicilio_fallec_2019[, var.seleccionadas]
+
+### Atención apoyo a domicilio defunciones  el año 2020
+
+atencion_domicilio_fallec_2020 = data.frame(atencion_domicilio_fallec_2020)
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_domicilio_fallec_2020) = variables
+
+atencion_domicilio_fallec_2020[is.na(atencion_domicilio_fallec_2020)] = 0
+atencion_domicilio_fallec_2020 = atencion_domicilio_fallec_2020[, var.seleccionadas]
+
+### Atención apoyo a domicilio defunciones  el año 2021
+
+atencion_domicilio_fallec_2021 = data.frame(atencion_domicilio_fallec_2021)
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_domicilio_fallec_2021) = variables
+
+atencion_domicilio_fallec_2021[is.na(atencion_domicilio_fallec_2021)] = 0
+atencion_domicilio_fallec_2021 = atencion_domicilio_fallec_2021[, var.seleccionadas]
+
+### Atención apoyo a domicilio defunciones  el año 2022
+
+atencion_domicilio_fallec_2022 = data.frame(atencion_domicilio_fallec_2022)
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_domicilio_fallec_2022) = variables
+
+atencion_domicilio_fallec_2022[is.na(atencion_domicilio_fallec_2022)] = 0
+atencion_domicilio_fallec_2022 = atencion_domicilio_fallec_2022[, var.seleccionadas]
+
+### Atención apoyo a domicilio defunciones  el año 2023
+
+atencion_domicilio_fallec_2023 = data.frame(atencion_domicilio_fallec_2023)
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_domicilio_fallec_2023) = variables
+
+atencion_domicilio_fallec_2023[is.na(atencion_domicilio_fallec_2023)] = 0
+atencion_domicilio_fallec_2023 = atencion_domicilio_fallec_2023[, var.seleccionadas]
+
+### Atención apoyo a domicilio defunciones  el año 2024
+
+atencion_domicilio_fallec_2024 = data.frame(atencion_domicilio_fallec_2024)
+
+variables = c("Edad","Hombre-Grado.I","Hombre-Grado.II","Hombre-Grado.III","Mujer-Grado.I","Mujer-Grado.II","Mujer-Grado.III")
+names(atencion_domicilio_fallec_2024) = variables
+
+atencion_domicilio_fallec_2024[is.na(atencion_domicilio_fallec_2024)] = 0
+atencion_domicilio_fallec_2024 = atencion_domicilio_fallec_2024[, var.seleccionadas]
+
+
+
+### POBLACIÓN INE ###
+
+### Población INE año 2017
+
+pop_2017 = data.frame(pop_2017)
+
+names(pop_2017) = c("Edad", "Hombre", "Mujer","Total")
+
+### Población INE año 2018
+
+pop_2018 = data.frame(pop_2018)
+
+names(pop_2018) = c("Edad", "Hombre", "Mujer","Total")
+
+### Población INE año 2019
+
+pop_2019 = data.frame(pop_2019)
+
+names(pop_2019) = c("Edad", "Hombre", "Mujer","Total")
+
+### Población INE año 2020
+
+pop_2020 = data.frame(pop_2020)
+
+names(pop_2020) = c("Edad", "Hombre", "Mujer","Total")
+
+### Población INE año 2021
+
+pop_2021 = data.frame(pop_2021)
+
+names(pop_2021) = c("Edad", "Hombre", "Mujer","Total")
+
+### Población INE año 2022
+
+pop_2022 = data.frame(pop_2022)
+
+names(pop_2022) = c("Edad", "Hombre", "Mujer","Total")
+
+### Población INE año 2023
+
+pop_2023 = data.frame(pop_2023)
+
+names(pop_2023) = c("Edad", "Hombre", "Mujer","Total")
+
+### Población INE año 2024
+
+pop_2024 = data.frame(pop_2024)
+
+names(pop_2024) = c("Edad", "Hombre", "Mujer","Total")
+
+### Población INE año 2025
+
+pop_2025 = data.frame(pop_2025)
+
+names(pop_2025) = c("Edad", "Hombre", "Mujer","Total")
+
+
+### DEFUNCIONES INE ###
+
+### defunciones INE año 2017
+
+def_2017 = data.frame(def_2017)
+
+names(def_2017) = c("Edad", "Hombre", "Mujer")
+def_2017$Total = def_2017$Hombre + def_2017$Mujer
+
+### defunciones INE año 2018
+
+def_2018 = data.frame(def_2018)
+
+names(def_2018) = c("Edad", "Hombre", "Mujer")
+def_2018$Total = def_2018$Hombre + def_2018$Mujer
+
+### defunciones INE año 2019
+
+def_2019 = data.frame(def_2019)
+
+names(def_2019) = c("Edad", "Hombre", "Mujer")
+def_2019$Total = def_2019$Hombre + def_2019$Mujer
+
+### defunciones INE año 2020
+
+def_2020 = data.frame(def_2020)
+
+names(def_2020) = c("Edad", "Hombre", "Mujer")
+def_2020$Total = def_2020$Hombre + def_2020$Mujer
+
+### defunciones INE año 2021
+
+def_2021 = data.frame(def_2021)
+
+names(def_2021) = c("Edad", "Hombre", "Mujer")
+def_2021$Total = def_2021$Hombre + def_2021$Mujer
+
+### defunciones INE año 2022
+
+def_2022 = data.frame(def_2022)
+
+names(def_2022) = c("Edad", "Hombre", "Mujer")
+def_2022$Total = def_2022$Hombre + def_2022$Mujer
+
+### defunciones INE año 2023
+
+def_2023 = data.frame(def_2023)
+
+names(def_2023) = c("Edad", "Hombre", "Mujer")
+def_2023$Total = def_2023$Hombre + def_2023$Mujer
+
+### defunciones INE año 2024
+
+def_2024 = data.frame(def_2024)
+
+names(def_2024) = c("Edad", "Hombre", "Mujer")
+def_2024$Total = def_2024$Hombre + def_2024$Mujer
+
+
+### TASAS DE MORTALIDAD ###
+
+### Tasa de mortalidad año 2017
+
+tasa_mortalidad_2017 = data.frame(tasa_mortalidad_2017)
+
+names(tasa_mortalidad_2017) = c("Edad", "Todos", "Hombre", "Mujer")
+
+### Tasa de mortalidad año 2018
+
+tasa_mortalidad_2018 = data.frame(tasa_mortalidad_2018)
+
+names(tasa_mortalidad_2018) = c("Edad", "Todos", "Hombre", "Mujer")
+
+### Tasa de mortalidad año 2019
+
+tasa_mortalidad_2019 = data.frame(tasa_mortalidad_2019)
+
+names(tasa_mortalidad_2019) = c("Edad", "Todos", "Hombre", "Mujer")
+
+### Tasa de mortalidad año 2020
+
+tasa_mortalidad_2020 = data.frame(tasa_mortalidad_2020)
+
+names(tasa_mortalidad_2020) = c("Edad", "Todos", "Hombre", "Mujer")
+
+### Tasa de mortalidad año 2021
+
+tasa_mortalidad_2021 = data.frame(tasa_mortalidad_2021)
+
+names(tasa_mortalidad_2021) = c("Edad", "Todos", "Hombre", "Mujer")
+
+### Tasa de mortalidad año 2022
+
+tasa_mortalidad_2022 = data.frame(tasa_mortalidad_2022)
+
+names(tasa_mortalidad_2022) = c("Edad", "Todos", "Hombre", "Mujer")
+
+### Tasa de mortalidad año 2023
+
+tasa_mortalidad_2023 = data.frame(tasa_mortalidad_2023)
+
+names(tasa_mortalidad_2023) = c("Edad", "Todos", "Hombre", "Mujer")
+
+```
+
+**Tasques pendents o detalls a tenir en compte**
+
+- Comprovar que no hi ha hagut cap error en la lectura de les dades (repassar les taules llegides amb les taules originals una per una, repassar que els valors transformats en 0 amb l'R no hagin transformat un NA en 0 per error...) 
+
+- Repassar i cercar de manera individual per cada taula de dades qualsevol tipus d'anomalia i anotar-la (per exemple, em sona que en una taula hi havia una observació amb 222 anys d'edat o alguna cosa similar, però no n'estic segur).
+
+### EXPORTACIÓN DE LOS DATOS
+
+Con el fin de facilitar el almacenamiento de estos, se procederá a exportar los datos leidos en formato *RData* y *Excel*
+
+**Exportación RData**
+
+```{r}
+
+### Exportación de los datos en formato RData
+
+save.image("C:/Users/Jordi/Desktop/Universitat/TFG/TFG - Jordi/Códigos R/Datos/TFG_Datos.RData")
+
+```
+
+**Exportación EXCEL**
+
+1o) Añadimos dos columnas que nos calculen el total de personas dependientes de sexo masculino y femenino:
+
+```{r}
+### Calculamos el total de Hombres y mujeres con grado de dependencia reconocido por cada año por cada grupo de atención.
+
+# Año 2017
+
+atencion_residencial_vivos_2017$`Hombre-Total` = rowSums(atencion_residencial_vivos_2017[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_residencial_vivos_2017$`Mujer-Total` = rowSums(atencion_residencial_vivos_2017[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_residencial_vivos_2017 = atencion_residencial_vivos_2017[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_residencial_fallec_2017$`Hombre-Total` = rowSums(atencion_residencial_fallec_2017[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_residencial_fallec_2017$`Mujer-Total` = rowSums(atencion_residencial_fallec_2017[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_residencial_fallec_2017 = atencion_residencial_fallec_2017[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_domicilio_vivos_2017$`Hombre-Total` = rowSums(atencion_domicilio_vivos_2017[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_domicilio_vivos_2017$`Mujer-Total` = rowSums(atencion_domicilio_vivos_2017[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_domicilio_vivos_2017 = atencion_domicilio_vivos_2017[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_domicilio_fallec_2017$`Hombre-Total` = rowSums(atencion_domicilio_fallec_2017[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_domicilio_fallec_2017$`Mujer-Total` = rowSums(atencion_domicilio_fallec_2017[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_domicilio_fallec_2017 = atencion_domicilio_fallec_2017[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+# Año 2018
+
+atencion_residencial_vivos_2018$`Hombre-Total` = rowSums(atencion_residencial_vivos_2018[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_residencial_vivos_2018$`Mujer-Total` = rowSums(atencion_residencial_vivos_2018[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_residencial_vivos_2018 = atencion_residencial_vivos_2018[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_residencial_fallec_2018$`Hombre-Total` = rowSums(atencion_residencial_fallec_2018[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_residencial_fallec_2018$`Mujer-Total` = rowSums(atencion_residencial_fallec_2018[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_residencial_fallec_2018 = atencion_residencial_fallec_2018[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_domicilio_vivos_2018$`Hombre-Total` = rowSums(atencion_domicilio_vivos_2018[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_domicilio_vivos_2018$`Mujer-Total` = rowSums(atencion_domicilio_vivos_2018[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_domicilio_vivos_2018 = atencion_domicilio_vivos_2018[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_domicilio_fallec_2018$`Hombre-Total` = rowSums(atencion_domicilio_fallec_2018[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_domicilio_fallec_2018$`Mujer-Total` = rowSums(atencion_domicilio_fallec_2018[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_domicilio_fallec_2018 = atencion_domicilio_fallec_2018[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+# Año 2019
+
+atencion_residencial_vivos_2019$`Hombre-Total` = rowSums(atencion_residencial_vivos_2019[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_residencial_vivos_2019$`Mujer-Total` = rowSums(atencion_residencial_vivos_2019[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_residencial_vivos_2019 = atencion_residencial_vivos_2019[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_residencial_fallec_2019$`Hombre-Total` = rowSums(atencion_residencial_fallec_2019[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_residencial_fallec_2019$`Mujer-Total` = rowSums(atencion_residencial_fallec_2019[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_residencial_fallec_2019 = atencion_residencial_fallec_2019[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_domicilio_vivos_2019$`Hombre-Total` = rowSums(atencion_domicilio_vivos_2019[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_domicilio_vivos_2019$`Mujer-Total` = rowSums(atencion_domicilio_vivos_2019[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_domicilio_vivos_2019 = atencion_domicilio_vivos_2019[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_domicilio_fallec_2019$`Hombre-Total` = rowSums(atencion_domicilio_fallec_2019[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_domicilio_fallec_2019$`Mujer-Total` = rowSums(atencion_domicilio_fallec_2019[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_domicilio_fallec_2019 = atencion_domicilio_fallec_2019[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+# Año 2020
+
+atencion_residencial_vivos_2020$`Hombre-Total` = rowSums(atencion_residencial_vivos_2020[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_residencial_vivos_2020$`Mujer-Total` = rowSums(atencion_residencial_vivos_2020[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_residencial_vivos_2020 = atencion_residencial_vivos_2020[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_residencial_fallec_2020$`Hombre-Total` = rowSums(atencion_residencial_fallec_2020[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_residencial_fallec_2020$`Mujer-Total` = rowSums(atencion_residencial_fallec_2020[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_residencial_fallec_2020 = atencion_residencial_fallec_2020[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_domicilio_vivos_2020$`Hombre-Total` = rowSums(atencion_domicilio_vivos_2020[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_domicilio_vivos_2020$`Mujer-Total` = rowSums(atencion_domicilio_vivos_2020[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_domicilio_vivos_2020 = atencion_domicilio_vivos_2020[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_domicilio_fallec_2020$`Hombre-Total` = rowSums(atencion_domicilio_fallec_2020[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_domicilio_fallec_2020$`Mujer-Total` = rowSums(atencion_domicilio_fallec_2020[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_domicilio_fallec_2020 = atencion_domicilio_fallec_2020[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+# Año 2021
+
+atencion_residencial_vivos_2021$`Hombre-Total` = rowSums(atencion_residencial_vivos_2021[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_residencial_vivos_2021$`Mujer-Total` = rowSums(atencion_residencial_vivos_2021[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_residencial_vivos_2021 = atencion_residencial_vivos_2021[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_residencial_fallec_2021$`Hombre-Total` = rowSums(atencion_residencial_fallec_2021[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_residencial_fallec_2021$`Mujer-Total` = rowSums(atencion_residencial_fallec_2021[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_residencial_fallec_2021 = atencion_residencial_fallec_2021[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_domicilio_vivos_2021$`Hombre-Total` = rowSums(atencion_domicilio_vivos_2021[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_domicilio_vivos_2021$`Mujer-Total` = rowSums(atencion_domicilio_vivos_2021[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_domicilio_vivos_2021 = atencion_domicilio_vivos_2021[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_domicilio_fallec_2021$`Hombre-Total` = rowSums(atencion_domicilio_fallec_2021[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_domicilio_fallec_2021$`Mujer-Total` = rowSums(atencion_domicilio_fallec_2021[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_domicilio_fallec_2021 = atencion_domicilio_fallec_2021[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+# Año 2022
+
+atencion_residencial_vivos_2022$`Hombre-Total` = rowSums(atencion_residencial_vivos_2022[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_residencial_vivos_2022$`Mujer-Total` = rowSums(atencion_residencial_vivos_2022[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_residencial_vivos_2022 = atencion_residencial_vivos_2022[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_residencial_fallec_2022$`Hombre-Total` = rowSums(atencion_residencial_fallec_2022[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_residencial_fallec_2022$`Mujer-Total` = rowSums(atencion_residencial_fallec_2022[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_residencial_fallec_2022 = atencion_residencial_fallec_2022[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_domicilio_vivos_2022$`Hombre-Total` = rowSums(atencion_domicilio_vivos_2022[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_domicilio_vivos_2022$`Mujer-Total` = rowSums(atencion_domicilio_vivos_2022[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_domicilio_vivos_2022 = atencion_domicilio_vivos_2022[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_domicilio_fallec_2022$`Hombre-Total` = rowSums(atencion_domicilio_fallec_2022[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_domicilio_fallec_2022$`Mujer-Total` = rowSums(atencion_domicilio_fallec_2022[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_domicilio_fallec_2022 = atencion_domicilio_fallec_2022[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+# Año 2023
+
+atencion_residencial_vivos_2023$`Hombre-Total` = rowSums(atencion_residencial_vivos_2023[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_residencial_vivos_2023$`Mujer-Total` = rowSums(atencion_residencial_vivos_2023[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_residencial_vivos_2023 = atencion_residencial_vivos_2023[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_residencial_fallec_2023$`Hombre-Total` = rowSums(atencion_residencial_fallec_2023[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_residencial_fallec_2023$`Mujer-Total` = rowSums(atencion_residencial_fallec_2023[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_residencial_fallec_2023 = atencion_residencial_fallec_2023[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_domicilio_vivos_2023$`Hombre-Total` = rowSums(atencion_domicilio_vivos_2023[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_domicilio_vivos_2023$`Mujer-Total` = rowSums(atencion_domicilio_vivos_2023[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_domicilio_vivos_2023 = atencion_domicilio_vivos_2023[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_domicilio_fallec_2023$`Hombre-Total` = rowSums(atencion_domicilio_fallec_2023[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_domicilio_fallec_2023$`Mujer-Total` = rowSums(atencion_domicilio_fallec_2023[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_domicilio_fallec_2023 = atencion_domicilio_fallec_2023[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+# Año 2024
+
+atencion_residencial_vivos_2024$`Hombre-Total` = rowSums(atencion_residencial_vivos_2024[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_residencial_vivos_2024$`Mujer-Total` = rowSums(atencion_residencial_vivos_2024[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_residencial_vivos_2024 = atencion_residencial_vivos_2024[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_residencial_fallec_2024$`Hombre-Total` = rowSums(atencion_residencial_fallec_2024[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_residencial_fallec_2024$`Mujer-Total` = rowSums(atencion_residencial_fallec_2024[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_residencial_fallec_2024 = atencion_residencial_fallec_2024[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_domicilio_vivos_2024$`Hombre-Total` = rowSums(atencion_domicilio_vivos_2024[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_domicilio_vivos_2024$`Mujer-Total` = rowSums(atencion_domicilio_vivos_2024[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_domicilio_vivos_2024 = atencion_domicilio_vivos_2024[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_domicilio_fallec_2024$`Hombre-Total` = rowSums(atencion_domicilio_fallec_2024[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_domicilio_fallec_2024$`Mujer-Total` = rowSums(atencion_domicilio_fallec_2024[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_domicilio_fallec_2024 = atencion_domicilio_fallec_2024[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+# Año 2025
+
+atencion_residencial_vivos_2025$`Hombre-Total` = rowSums(atencion_residencial_vivos_2025[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_residencial_vivos_2025$`Mujer-Total` = rowSums(atencion_residencial_vivos_2025[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_residencial_vivos_2025 = atencion_residencial_vivos_2025[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+atencion_domicilio_vivos_2025$`Hombre-Total` = rowSums(atencion_domicilio_vivos_2025[, c("Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III")])
+atencion_domicilio_vivos_2025$`Mujer-Total` = rowSums(atencion_domicilio_vivos_2025[, c("Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III")])
+atencion_domicilio_vivos_2025 = atencion_domicilio_vivos_2025[, c("Edad", "Hombre-Grado.I", "Hombre-Grado.II", "Hombre-Grado.III", "Hombre-Total", "Mujer-Grado.I", "Mujer-Grado.II", "Mujer-Grado.III", "Mujer-Total")]
+
+```
+
+2o) Para exortar los datos necesitamos que cada variable identifique el año al que corresponde además del sexo y grado de dependencia de las observaciones a las que representa.
+
+```{r}
+### Añadimos a cada variable el año que representan los datos de esta manera podemos también identifcar en una variable el sexo, grado de dependencia i año de los datos.
+
+# Año 2017
+
+var.seleccionadas = c("Edad", "Hombre-Grado.I-2017", "Hombre-Grado.II-2017", "Hombre-Grado.III-2017", "Hombre-Total-2017", "Mujer-Grado.I-2017", "Mujer-Grado.II-2017", "Mujer-Grado.III-2017", "Mujer-Total-2017")
+
+names(atencion_residencial_vivos_2017) = var.seleccionadas
+names(atencion_residencial_fallec_2017) = var.seleccionadas
+names(atencion_domicilio_vivos_2017) = var.seleccionadas
+names(atencion_domicilio_fallec_2017) = var.seleccionadas
+
+var.seleccionadas = c("Edad", "Hombre-2017", "mujer-2017", "Total-2017")
+
+names(pop_2017) = var.seleccionadas
+names(def_2017) = var.seleccionadas
+
+# Año 2018
+
+var.seleccionadas = c("Edad", "Hombre-Grado.I-2018", "Hombre-Grado.II-2018", "Hombre-Grado.III-2018", "Hombre-Total-2018", "Mujer-Grado.I-2018", "Mujer-Grado.II-2018", "Mujer-Grado.III-2018", "Mujer-Total-2018")
+
+names(atencion_residencial_vivos_2018) = var.seleccionadas
+names(atencion_residencial_fallec_2018) = var.seleccionadas
+names(atencion_domicilio_vivos_2018) = var.seleccionadas
+names(atencion_domicilio_fallec_2018) = var.seleccionadas
+
+var.seleccionadas = c("Edad", "Hombre-2018", "mujer-2018", "Total-2018")
+
+names(pop_2018) = var.seleccionadas
+names(def_2018) = var.seleccionadas
+
+# Año 2019
+
+var.seleccionadas = c("Edad", "Hombre-Grado.I-2019", "Hombre-Grado.II-2019", "Hombre-Grado.III-2019", "Hombre-Total-2019", "Mujer-Grado.I-2019", "Mujer-Grado.II-2019", "Mujer-Grado.III-2019", "Mujer-Total-2019")
+
+names(atencion_residencial_vivos_2019) = var.seleccionadas
+names(atencion_residencial_fallec_2019) = var.seleccionadas
+names(atencion_domicilio_vivos_2019) = var.seleccionadas
+names(atencion_domicilio_fallec_2019) = var.seleccionadas
+
+var.seleccionadas = c("Edad", "Hombre-2019", "mujer-2019", "Total-2019")
+
+names(pop_2019) = var.seleccionadas
+names(def_2019) = var.seleccionadas
+
+# Año 2020
+
+var.seleccionadas = c("Edad", "Hombre-Grado.I-2020", "Hombre-Grado.II-2020", "Hombre-Grado.III-2020", "Hombre-Total-2020", "Mujer-Grado.I-2020", "Mujer-Grado.II-2020", "Mujer-Grado.III-2020", "Mujer-Total-2020")
+
+names(atencion_residencial_vivos_2020) = var.seleccionadas
+names(atencion_residencial_fallec_2020) = var.seleccionadas
+names(atencion_domicilio_vivos_2020) = var.seleccionadas
+names(atencion_domicilio_fallec_2020) = var.seleccionadas
+
+var.seleccionadas = c("Edad", "Hombre-2020", "mujer-2020", "Total-2020")
+
+names(pop_2020) = var.seleccionadas
+names(def_2020) = var.seleccionadas
+
+# Año 2021
+
+var.seleccionadas = c("Edad", "Hombre-Grado.I-2021", "Hombre-Grado.II-2021", "Hombre-Grado.III-2021", "Hombre-Total-2021", "Mujer-Grado.I-2021", "Mujer-Grado.II-2021", "Mujer-Grado.III-2021", "Mujer-Total-2021")
+
+names(atencion_residencial_vivos_2021) = var.seleccionadas
+names(atencion_residencial_fallec_2021) = var.seleccionadas
+names(atencion_domicilio_vivos_2021) = var.seleccionadas
+names(atencion_domicilio_fallec_2021) = var.seleccionadas
+
+var.seleccionadas = c("Edad", "Hombre-2021", "mujer-2021", "Total-2021")
+
+names(pop_2021) = var.seleccionadas
+names(def_2021) = var.seleccionadas
+
+# Año 2022
+
+var.seleccionadas = c("Edad", "Hombre-Grado.I-2022", "Hombre-Grado.II-2022", "Hombre-Grado.III-2022", "Hombre-Total-2022", "Mujer-Grado.I-2022", "Mujer-Grado.II-2022", "Mujer-Grado.III-2022", "Mujer-Total-2022")
+
+names(atencion_residencial_vivos_2022) = var.seleccionadas
+names(atencion_residencial_fallec_2022) = var.seleccionadas
+names(atencion_domicilio_vivos_2022) = var.seleccionadas
+names(atencion_domicilio_fallec_2022) = var.seleccionadas
+
+var.seleccionadas = c("Edad", "Hombre-2022", "mujer-2022", "Total-2022")
+
+names(pop_2022) = var.seleccionadas
+names(def_2022) = var.seleccionadas
+
+
+# Año 2023
+
+var.seleccionadas = c("Edad", "Hombre-Grado.I-2023", "Hombre-Grado.II-2023", "Hombre-Grado.III-2023", "Hombre-Total-2023", "Mujer-Grado.I-2023", "Mujer-Grado.II-2023", "Mujer-Grado.III-2023", "Mujer-Total-2023")
+
+names(atencion_residencial_vivos_2023) = var.seleccionadas
+names(atencion_residencial_fallec_2023) = var.seleccionadas
+names(atencion_domicilio_vivos_2023) = var.seleccionadas
+names(atencion_domicilio_fallec_2023) = var.seleccionadas
+
+var.seleccionadas = c("Edad", "Hombre-2023", "mujer-2023", "Total-2023")
+
+names(pop_2023) = var.seleccionadas
+names(def_2023) = var.seleccionadas
+
+# Año 2024
+
+var.seleccionadas = c("Edad", "Hombre-Grado.I-2024", "Hombre-Grado.II-2024", "Hombre-Grado.III-2024", "Hombre-Total-2024", "Mujer-Grado.I-2024", "Mujer-Grado.II-2024", "Mujer-Grado.III-2024", "Mujer-Total-2024")
+
+names(atencion_residencial_vivos_2024) = var.seleccionadas
+names(atencion_residencial_fallec_2024) = var.seleccionadas
+names(atencion_domicilio_vivos_2024) = var.seleccionadas
+names(atencion_domicilio_fallec_2024) = var.seleccionadas
+
+var.seleccionadas = c("Edad", "Hombre-2024", "mujer-2024", "Total-2024")
+
+names(pop_2024) = var.seleccionadas
+names(def_2024) = var.seleccionadas
+
+# Año 2025
+
+var.seleccionadas = c("Edad", "Hombre-Grado.I-2025", "Hombre-Grado.II-2025", "Hombre-Grado.III-2025", "Hombre-Total-2025", "Mujer-Grado.I-2025", "Mujer-Grado.II-2025", "Mujer-Grado.III-2025", "Mujer-Total-2025")
+
+names(atencion_residencial_vivos_2025) = var.seleccionadas
+names(atencion_domicilio_vivos_2025) = var.seleccionadas
+
+var.seleccionadas = c("Edad", "Hombre-2025", "mujer-2025", "Total-2025")
+
+names(pop_2025) = var.seleccionadas
+
+```
+
+3o) Obtenemos 6 df que representen todos los tipos de atención (Domocilio o Residencial) y estados de los individuos (población superviviente o defunciones) + defunciones y supervivientes registrados en el INE
+
+
+```{r}
+### Juntamos los datos por tipo de atención y tipo de registros (apoyo residencial, apoyo residencial - fallecidos, apoyo a domicilio, apoyo a domicilio - fallecidos) + INE
+
+# Apoyo residencial
+
+apoyo_residencial = data.frame(Edad = 0:115)
+
+apoyo_residencial.2 = merge(apoyo_residencial, atencion_residencial_vivos_2017, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_residencial.2 = merge(apoyo_residencial.2, atencion_residencial_vivos_2018, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_residencial.2 = merge(apoyo_residencial.2, atencion_residencial_vivos_2019, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_residencial.2 = merge(apoyo_residencial.2, atencion_residencial_vivos_2020, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_residencial.2 = merge(apoyo_residencial.2, atencion_residencial_vivos_2021, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_residencial.2 = merge(apoyo_residencial.2, atencion_residencial_vivos_2022, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_residencial.2 = merge(apoyo_residencial.2, atencion_residencial_vivos_2023, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_residencial.2 = merge(apoyo_residencial.2, atencion_residencial_vivos_2024, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_residencial.2 = merge(apoyo_residencial.2, atencion_residencial_vivos_2025, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+# Apoyo residencial (fallecidos)
+
+apoyo_residencial_fallec = data.frame(Edad = 0:115)
+
+apoyo_residencial_fallec.2 = merge(apoyo_residencial_fallec, atencion_residencial_fallec_2017, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_residencial_fallec.2 = merge(apoyo_residencial_fallec.2, atencion_residencial_fallec_2018, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_residencial_fallec.2 = merge(apoyo_residencial_fallec.2, atencion_residencial_fallec_2019, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_residencial_fallec.2 = merge(apoyo_residencial_fallec.2, atencion_residencial_fallec_2020, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_residencial_fallec.2 = merge(apoyo_residencial_fallec.2, atencion_residencial_fallec_2021, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_residencial_fallec.2 = merge(apoyo_residencial_fallec.2, atencion_residencial_fallec_2022, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_residencial_fallec.2 = merge(apoyo_residencial_fallec.2, atencion_residencial_fallec_2023, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_residencial_fallec.2 = merge(apoyo_residencial_fallec.2, atencion_residencial_fallec_2024, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+# Apoyo a domicilio
+
+apoyo_domicilio = data.frame(Edad = 0:115)
+
+apoyo_domicilio.2 = merge(apoyo_domicilio, atencion_domicilio_vivos_2017, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_domicilio.2 = merge(apoyo_domicilio.2, atencion_domicilio_vivos_2018, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_domicilio.2 = merge(apoyo_domicilio.2, atencion_domicilio_vivos_2019, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_domicilio.2 = merge(apoyo_domicilio.2, atencion_domicilio_vivos_2020, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_domicilio.2 = merge(apoyo_domicilio.2, atencion_domicilio_vivos_2021, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_domicilio.2 = merge(apoyo_domicilio.2, atencion_domicilio_vivos_2022, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_domicilio.2 = merge(apoyo_domicilio.2, atencion_domicilio_vivos_2023, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_domicilio.2 = merge(apoyo_domicilio.2, atencion_domicilio_vivos_2024, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_domicilio.2 = merge(apoyo_domicilio.2, atencion_domicilio_vivos_2025, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+# Apoyo a domicilio (fallecidos)
+
+apoyo_domicilio_fallec = data.frame(Edad = 0:115) # Tenemos en cuenta solo registros entre 0 y 115 años de edad
+
+apoyo_domicilio_fallec.2 = merge(apoyo_domicilio_fallec, atencion_domicilio_fallec_2017, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_domicilio_fallec.2 = merge(apoyo_domicilio_fallec.2, atencion_domicilio_fallec_2018, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_domicilio_fallec.2 = merge(apoyo_domicilio_fallec.2, atencion_domicilio_fallec_2019, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_domicilio_fallec.2 = merge(apoyo_domicilio_fallec.2, atencion_domicilio_fallec_2020, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_domicilio_fallec.2 = merge(apoyo_domicilio_fallec.2, atencion_domicilio_fallec_2021, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_domicilio_fallec.2 = merge(apoyo_domicilio_fallec.2, atencion_domicilio_fallec_2022, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_domicilio_fallec.2 = merge(apoyo_domicilio_fallec.2, atencion_domicilio_fallec_2023, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+apoyo_domicilio_fallec.2 = merge(apoyo_domicilio_fallec.2, atencion_domicilio_fallec_2024, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+# INE 
+
+pop_INE = data.frame(Edad = pop_2017$Edad)
+
+pop_INE = merge(pop_INE, pop_2017, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+pop_INE = merge(pop_INE, pop_2018, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+pop_INE = merge(pop_INE, pop_2019, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+pop_INE = merge(pop_INE, pop_2020, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+pop_INE = merge(pop_INE, pop_2021, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+pop_INE = merge(pop_INE, pop_2022, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+pop_INE = merge(pop_INE, pop_2023, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+pop_INE = merge(pop_INE, pop_2024, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+pop_INE = merge(pop_INE, pop_2025, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+
+
+# INE fallecidos
+
+def_INE = data.frame(Edad = def_2017$Edad)
+
+def_INE = merge(def_INE, def_2017, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+def_INE = merge(def_INE, def_2018, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+def_INE = merge(def_INE, def_2019, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+def_INE = merge(def_INE, def_2020, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+def_INE = merge(def_INE, def_2021, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+def_INE = merge(def_INE, def_2022, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+def_INE = merge(def_INE, def_2023, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+def_INE = merge(def_INE, def_2024, by.x = "Edad", by.y = "Edad", all.x = TRUE)
+
+### Al no haber registros por cada uno de los 0:115 años de edad en cada año de cada tipo d'atención, la instrucción merge() anterior completa una falta con un valor NA. Interpretando en este caso que se trata de un valor nulo en vez de un valor faltante se procederá a la sustitución de cualquier valor faltante de los datos a el valor 0.
+
+apoyo_residencial.2[is.na(apoyo_residencial.2)] = 0 # Apoyo residencial
+apoyo_residencial_fallec.2[is.na(apoyo_residencial_fallec.2)] = 0 # Apoyo residencial (fallecidos)
+apoyo_domicilio.2[is.na(apoyo_domicilio.2)] = 0 # Apoyo a domicilio 
+apoyo_domicilio_fallec.2[is.na(apoyo_domicilio_fallec.2)] = 0 # Apoyo a domicilio (fallecidos)
+
+pop_INE[is.na(pop_INE)] = 0
+def_INE[is.na(def_INE)] = 0
+
+
+
+```
+
+5o) Exportación de los datos a un Excel externo
+
+```{r}
+### Exportación de los datos
+
+write_xlsx(
+  list(
+    apoyo_residencial = apoyo_residencial.2,
+    apoyo_residencial_fallec = apoyo_residencial_fallec.2,
+    apoyo_domicilio = apoyo_domicilio.2,
+    apoyo_domicilio_fallec = apoyo_domicilio_fallec.2
+  ),
+  path = "Informe_Valoraciones_IMSERSO.xlsx"
+)
+
+write_xlsx(
+  list(
+    supervivientes = pop_INE,
+    defunciones = def_INE
+  ),
+  path = "Informe_Valoraciones_INE.xlsx"
+)
+
+```
+
+
+

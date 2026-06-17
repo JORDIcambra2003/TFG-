@@ -1,0 +1,1294 @@
+---
+title: "Validación de los modelos"
+author: "Jordi Gascons i Cambra"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+En este documeto, **6. Validación de los resultados**, se procederá a partir de los resultados proporcionados en **5. Automatización de los resultados** y las funciones diseñadas en **4. Parametrización y funciones**, a realizar todos esos cálculos pertinentes para validar los modelos e interpretar los resultados.
+
+
+```{r}
+
+# install.packages("sqldf")
+# install.packages("dplyr")
+# install.packages("ggplot2")
+# install.packages("readxl")
+# install.packages("writexl")
+# install.packages("gridExtra")
+# install.packages("reshape2")
+# install.packages("zoo")
+# install.packages("MortalityLaws")
+# install.packages("xlsx")
+# install.packages("minpack.lm")
+# install.packages("patchwork")
+
+
+library(sqldf)
+library(dplyr)
+library(ggplot2)
+library(readxl)
+library(writexl)
+library(gridExtra)
+library(reshape2)
+library(zoo)
+library(MortalityLaws)
+library(xlsx)
+library(minpack.lm)
+library(patchwork)
+
+load("Datos/TFG5_Datos.RData")
+
+```
+
+## VALIDACIÓN DE LOS AJUSTES
+
+### MSE I RMSE
+
+```{r}
+
+# Año 2017
+
+tabla.MSE.residencial.2017 = residuos.MSE(TBM.obs = df.residencial.2017.HP[, c(1,2:7)],
+                                          TBM.ajus1 = df.residencial.2017.HP[, c(1, 14:19)],
+                                          TBM.ajus2 = df.residencial.2017.Gmp[, c(1, 14:19)],
+                                          TBM.ajus3 = df.residencial.2017.GM[, c(1, 14:19)],
+                                          rango.edades = 35:100,
+                                          ajuste.XX = c("Heligman & Pollard", "Gompertz", "Gompertz - Makeham"))
+
+tabla.RMSE.residencial.2017 = sqrt(tabla.MSE.residencial.2017)
+
+
+
+tabla.MSE.domicilio.2017 = residuos.MSE(TBM.obs = df.domicilio.2017.HP[, c(1,2:7)],
+                                        TBM.ajus1 = df.domicilio.2017.HP[, c(1, 14:19)],
+                                        TBM.ajus2 = df.domicilio.2017.Gmp[, c(1, 14:19)],
+                                        TBM.ajus3 = df.domicilio.2017.GM[, c(1, 14:19)],
+                                        rango.edades = 35:100,
+                                        ajuste.XX = c("Heligman & Pollard", "Gompertz", "Gompertz - Makeham"))
+
+tabla.RMSE.domicilio.2017 = sqrt(tabla.MSE.domicilio.2017)
+
+write_xlsx(
+    list(
+     MSE.Res = as.data.frame(tabla.MSE.residencial.2017),
+     RMSE.Res = as.data.frame(tabla.RMSE.residencial.2017),
+     MSE.Dom = as.data.frame(tabla.MSE.domicilio.2017),
+     RMSE.Dom = as.data.frame(tabla.RMSE.domicilio.2017)
+   ),
+   path = paste0("./","Tablas_Errores_2017",".xlsx")       
+) 
+
+# Año 2018
+
+tabla.MSE.residencial.2018 = residuos.MSE(TBM.obs = df.residencial.2018.HP[, c(1,2:7)],
+                                          TBM.ajus1 = df.residencial.2018.HP[, c(1, 14:19)],
+                                          TBM.ajus2 = df.residencial.2018.Gmp[, c(1, 14:19)],
+                                          TBM.ajus3 = df.residencial.2018.GM[, c(1, 14:19)],
+                                          rango.edades = 35:100,
+                                          ajuste.XX = c("Heligman & Pollard", "Gompertz", "Gompertz - Makeham"))
+
+tabla.RMSE.residencial.2018 = sqrt(tabla.MSE.residencial.2018)
+
+tabla.MSE.domicilio.2018 = residuos.MSE(TBM.obs = df.domicilio.2018.HP[, c(1,2:7)],
+                                        TBM.ajus1 = df.domicilio.2018.HP[, c(1, 14:19)],
+                                        TBM.ajus2 = df.domicilio.2018.Gmp[, c(1, 14:19)],
+                                        TBM.ajus3 = df.domicilio.2018.GM[, c(1, 14:19)],
+                                        rango.edades = 35:100,
+                                        ajuste.XX = c("Heligman & Pollard", "Gompertz", "Gompertz - Makeham"))
+
+tabla.RMSE.domicilio.2018 = sqrt(tabla.MSE.domicilio.2018)
+
+write_xlsx(
+    list(
+     MSE.Res = as.data.frame(tabla.MSE.residencial.2018),
+     RMSE.Res = as.data.frame(tabla.RMSE.residencial.2018),
+     MSE.Dom = as.data.frame(tabla.MSE.domicilio.2018),
+     RMSE.Dom = as.data.frame(tabla.RMSE.domicilio.2018)
+   ),
+   path = paste0("./","Tablas_Errores_2018",".xlsx")       
+) 
+
+# Año 2019
+
+tabla.MSE.residencial.2019 = residuos.MSE(TBM.obs = df.residencial.2019.HP[, c(1,2:7)],
+                                          TBM.ajus1 = df.residencial.2019.HP[, c(1, 14:19)],
+                                          TBM.ajus2 = df.residencial.2019.Gmp[, c(1, 14:19)],
+                                          TBM.ajus3 = df.residencial.2019.GM[, c(1, 14:19)],
+                                          rango.edades = 35:100,
+                                          ajuste.XX = c("Heligman & Pollard", "Gompertz", "Gompertz - Makeham"))
+
+tabla.RMSE.residencial.2019 = sqrt(tabla.MSE.residencial.2019)
+
+tabla.MSE.domicilio.2019 = residuos.MSE(TBM.obs = df.domicilio.2019.HP[, c(1,2:7)],
+                                        TBM.ajus1 = df.domicilio.2019.HP[, c(1, 14:19)],
+                                        TBM.ajus2 = df.domicilio.2019.Gmp[, c(1, 14:19)],
+                                        TBM.ajus3 = df.domicilio.2019.GM[, c(1, 14:19)],
+                                        rango.edades = 35:100,
+                                        ajuste.XX = c("Heligman & Pollard", "Gompertz", "Gompertz - Makeham"))
+
+tabla.RMSE.domicilio.2019 = sqrt(tabla.MSE.domicilio.2019)
+
+write_xlsx(
+    list(
+     MSE.Res = as.data.frame(tabla.MSE.residencial.2019),
+     RMSE.Res = as.data.frame(tabla.RMSE.residencial.2019),
+     MSE.Dom = as.data.frame(tabla.MSE.domicilio.2019),
+     RMSE.Dom = as.data.frame(tabla.RMSE.domicilio.2019)
+   ),
+   path = paste0("./","Tablas_Errores_2019",".xlsx")       
+)
+
+# Año 2020
+
+tabla.MSE.residencial.2020 = residuos.MSE(TBM.obs = df.residencial.2020.HP[, c(1,2:7)],
+                                          TBM.ajus1 = df.residencial.2020.HP[, c(1, 14:19)],
+                                          TBM.ajus2 = df.residencial.2020.Gmp[, c(1, 14:19)],
+                                          TBM.ajus3 = df.residencial.2020.GM[, c(1, 14:19)],
+                                          rango.edades = 35:100,
+                                          ajuste.XX = c("Heligman & Pollard", "Gompertz", "Gompertz - Makeham"))
+
+tabla.RMSE.residencial.2020 = sqrt(tabla.MSE.residencial.2020)
+
+tabla.MSE.domicilio.2020 = residuos.MSE(TBM.obs = df.domicilio.2020.HP[, c(1,2:7)],
+                                        TBM.ajus1 = df.domicilio.2020.HP[, c(1, 14:19)],
+                                        TBM.ajus2 = df.domicilio.2020.Gmp[, c(1, 14:19)],
+                                        TBM.ajus3 = df.domicilio.2020.GM[, c(1, 14:19)],
+                                        rango.edades = 35:100,
+                                        ajuste.XX = c("Heligman & Pollard", "Gompertz", "Gompertz - Makeham"))
+
+tabla.RMSE.domicilio.2020 = sqrt(tabla.MSE.domicilio.2020)
+
+write_xlsx(
+    list(
+     MSE.Res = as.data.frame(tabla.MSE.residencial.2020),
+     RMSE.Res = as.data.frame(tabla.RMSE.residencial.2020),
+     MSE.Dom = as.data.frame(tabla.MSE.domicilio.2020),
+     RMSE.Dom = as.data.frame(tabla.RMSE.domicilio.2020)
+   ),
+   path = paste0("./","Tablas_Errores_2020",".xlsx")       
+)
+
+# Año 2021
+
+tabla.MSE.residencial.2021 = residuos.MSE(TBM.obs = df.residencial.2021.HP[, c(1,2:7)],
+                                          TBM.ajus1 = df.residencial.2021.HP[, c(1, 14:19)],
+                                          TBM.ajus2 = df.residencial.2021.Gmp[, c(1, 14:19)],
+                                          TBM.ajus3 = df.residencial.2021.GM[, c(1, 14:19)],
+                                          rango.edades = 35:100,
+                                          ajuste.XX = c("Heligman & Pollard", "Gompertz", "Gompertz - Makeham"))
+
+tabla.RMSE.residencial.2021 = sqrt(tabla.MSE.residencial.2021)
+
+tabla.MSE.domicilio.2021 = residuos.MSE(TBM.obs = df.domicilio.2021.HP[, c(1,2:7)],
+                                        TBM.ajus1 = df.domicilio.2021.HP[, c(1, 14:19)],
+                                        TBM.ajus2 = df.domicilio.2021.Gmp[, c(1, 14:19)],
+                                        TBM.ajus3 = df.domicilio.2021.GM[, c(1, 14:19)],
+                                        rango.edades = 35:100,
+                                        ajuste.XX = c("Heligman & Pollard", "Gompertz", "Gompertz - Makeham"))
+
+tabla.RMSE.domicilio.2021 = sqrt(tabla.MSE.domicilio.2021)
+
+write_xlsx(
+    list(
+     MSE.Res = as.data.frame(tabla.MSE.residencial.2021),
+     RMSE.Res = as.data.frame(tabla.RMSE.residencial.2021),
+     MSE.Dom = as.data.frame(tabla.MSE.domicilio.2021),
+     RMSE.Dom = as.data.frame(tabla.RMSE.domicilio.2021)
+   ),
+   path = paste0("./","Tablas_Errores_2021",".xlsx")       
+)
+
+# Año 2022
+
+tabla.MSE.residencial.2022 = residuos.MSE(TBM.obs = df.residencial.2022.HP[, c(1,2:7)],
+                                          TBM.ajus1 = df.residencial.2022.HP[, c(1, 14:19)],
+                                          TBM.ajus2 = df.residencial.2022.Gmp[, c(1, 14:19)],
+                                          TBM.ajus3 = df.residencial.2022.GM[, c(1, 14:19)],
+                                          rango.edades = 35:100,
+                                          ajuste.XX = c("Heligman & Pollard", "Gompertz", "Gompertz - Makeham"))
+
+tabla.RMSE.residencial.2022 = sqrt(tabla.MSE.residencial.2022)
+
+tabla.MSE.domicilio.2022 = residuos.MSE(TBM.obs = df.domicilio.2022.HP[, c(1,2:7)],
+                                        TBM.ajus1 = df.domicilio.2022.HP[, c(1, 14:19)],
+                                        TBM.ajus2 = df.domicilio.2022.Gmp[, c(1, 14:19)],
+                                        TBM.ajus3 = df.domicilio.2022.GM[, c(1, 14:19)],
+                                        rango.edades = 35:100,
+                                        ajuste.XX = c("Heligman & Pollard", "Gompertz", "Gompertz - Makeham"))
+
+tabla.RMSE.domicilio.2022 = sqrt(tabla.MSE.domicilio.2022)
+
+write_xlsx(
+    list(
+     MSE.Res = as.data.frame(tabla.MSE.residencial.2022),
+     RMSE.Res = as.data.frame(tabla.RMSE.residencial.2022),
+     MSE.Dom = as.data.frame(tabla.MSE.domicilio.2022),
+     RMSE.Dom = as.data.frame(tabla.RMSE.domicilio.2022)
+   ),
+   path = paste0("./","Tablas_Errores_2022",".xlsx")       
+)
+
+# Año 2023
+
+tabla.MSE.residencial.2023 = residuos.MSE(TBM.obs = df.residencial.2023.HP[, c(1,2:7)],
+                                          TBM.ajus1 = df.residencial.2023.HP[, c(1, 14:19)],
+                                          TBM.ajus2 = df.residencial.2023.Gmp[, c(1, 14:19)],
+                                          TBM.ajus3 = df.residencial.2023.GM[, c(1, 14:19)],
+                                          rango.edades = 35:100,
+                                          ajuste.XX = c("Heligman & Pollard", "Gompertz", "Gompertz - Makeham"))
+
+tabla.RMSE.residencial.2023 = sqrt(tabla.MSE.residencial.2023)
+
+tabla.MSE.domicilio.2023 = residuos.MSE(TBM.obs = df.domicilio.2023.HP[, c(1,2:7)],
+                                        TBM.ajus1 = df.domicilio.2023.HP[, c(1, 14:19)],
+                                        TBM.ajus2 = df.domicilio.2023.Gmp[, c(1, 14:19)],
+                                        TBM.ajus3 = df.domicilio.2023.GM[, c(1, 14:19)],
+                                        rango.edades = 35:100,
+                                        ajuste.XX = c("Heligman & Pollard", "Gompertz", "Gompertz - Makeham"))
+
+tabla.RMSE.domicilio.2023 = sqrt(tabla.MSE.domicilio.2023)
+
+write_xlsx(
+    list(
+     MSE.Res = as.data.frame(tabla.MSE.residencial.2023),
+     RMSE.Res = as.data.frame(tabla.RMSE.residencial.2023),
+     MSE.Dom = as.data.frame(tabla.MSE.domicilio.2023),
+     RMSE.Dom = as.data.frame(tabla.RMSE.domicilio.2023)
+   ),
+   path = paste0("./","Tablas_Errores_2023",".xlsx")       
+)
+
+# Año 2024
+
+tabla.MSE.residencial.2024 = residuos.MSE(TBM.obs = df.residencial.2024.HP[, c(1,2:7)],
+                                          TBM.ajus1 = df.residencial.2024.HP[, c(1, 14:19)],
+                                          TBM.ajus2 = df.residencial.2024.Gmp[, c(1, 14:19)],
+                                          TBM.ajus3 = df.residencial.2024.GM[, c(1, 14:19)],
+                                          rango.edades = 35:100,
+                                          ajuste.XX = c("Heligman & Pollard", "Gompertz", "Gompertz - Makeham"))
+
+tabla.RMSE.residencial.2024 = sqrt(tabla.MSE.residencial.2024)
+
+tabla.MSE.domicilio.2024 = residuos.MSE(TBM.obs = df.domicilio.2024.HP[, c(1,2:7)],
+                                        TBM.ajus1 = df.domicilio.2024.HP[, c(1, 14:19)],
+                                        TBM.ajus2 = df.domicilio.2024.Gmp[, c(1, 14:19)],
+                                        TBM.ajus3 = df.domicilio.2024.GM[, c(1, 14:19)],
+                                        rango.edades = 35:100,
+                                        ajuste.XX = c("Heligman & Pollard", "Gompertz", "Gompertz - Makeham"))
+
+tabla.RMSE.domicilio.2024 = sqrt(tabla.MSE.domicilio.2024)
+
+write_xlsx(
+    list(
+     MSE.Res = as.data.frame(tabla.MSE.residencial.2024),
+     RMSE.Res = as.data.frame(tabla.RMSE.residencial.2024),
+     MSE.Dom = as.data.frame(tabla.MSE.domicilio.2024),
+     RMSE.Dom = as.data.frame(tabla.RMSE.domicilio.2024)
+   ),
+   path = paste0("./","Tablas_Errores_2024",".xlsx")       
+)
+
+# Año 2025
+
+### DATOS NO DISPONIBLE AÚN
+
+```
+
+### GRÁFICOS DE LOS RESIDUOS
+
+```{r}
+
+plot(mod.domicilio.2017.HP[[2]]$fitted.values)
+
+```
+
+
+
+
+
+## INTERVALOS DE CONFIANZA
+
+En primer lugar se procederá a calcular los intervalos de confianza necessarios de las diferents estimaciones realiadas para proporcionar los resultados en estimación puntual acompañadas de un intervalo de confianza.
+
+```{r}
+
+### AÑO 2017
+
+IC.TCL.residencial.2017.HP = IC.TCL.3(TBM = df.residencial.2017.HP[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2017, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2017.HP = IC.TCL.3(TBM = df.domicilio.2017.HP[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2017, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.residencial.2017.GM = IC.TCL.3(TBM = df.residencial.2017.GM[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2017, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2017.GM = IC.TCL.3(TBM = df.domicilio.2017.GM[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2017, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.residencial.2017.Gmp = IC.TCL.3(TBM = df.residencial.2017.Gmp[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2017, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2017.Gmp = IC.TCL.3(TBM = df.domicilio.2017.Gmp[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2017, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+
+
+### AÑO 2018
+
+IC.TCL.residencial.2018.HP = IC.TCL.3(TBM = df.residencial.2018.HP[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2018, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2018.HP = IC.TCL.3(TBM = df.domicilio.2018.HP[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2018, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.residencial.2018.GM = IC.TCL.3(TBM = df.residencial.2018.GM[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2018, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2018.GM = IC.TCL.3(TBM = df.domicilio.2018.GM[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2018, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.residencial.2018.Gmp = IC.TCL.3(TBM = df.residencial.2018.Gmp[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2018, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2018.Gmp = IC.TCL.3(TBM = df.domicilio.2018.Gmp[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2018, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+### AÑO 2019
+
+IC.TCL.residencial.2019.HP = IC.TCL.3(TBM = df.residencial.2019.HP[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2019, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2019.HP = IC.TCL.3(TBM = df.domicilio.2019.HP[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2019, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.residencial.2019.GM = IC.TCL.3(TBM = df.residencial.2019.GM[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2019, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2019.GM = IC.TCL.3(TBM = df.domicilio.2019.GM[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2019, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.residencial.2019.Gmp = IC.TCL.3(TBM = df.residencial.2019.Gmp[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2019, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2019.Gmp = IC.TCL.3(TBM = df.domicilio.2019.Gmp[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2019, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+### AÑO 2020
+
+IC.TCL.residencial.2020.HP = IC.TCL.3(TBM = df.residencial.2020.HP[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2020, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2020.HP = IC.TCL.3(TBM = df.domicilio.2020.HP[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2020, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.residencial.2020.GM = IC.TCL.3(TBM = df.residencial.2020.GM[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2020, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2020.GM = IC.TCL.3(TBM = df.domicilio.2020.GM[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2020, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.residencial.2020.Gmp = IC.TCL.3(TBM = df.residencial.2020.Gmp[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2020, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2020.Gmp = IC.TCL.3(TBM = df.domicilio.2020.Gmp[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2020, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+### AÑO 2021
+
+IC.TCL.residencial.2021.HP = IC.TCL.3(TBM = df.residencial.2021.HP[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2021, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2021.HP = IC.TCL.3(TBM = df.domicilio.2021.HP[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2021, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.residencial.2021.GM = IC.TCL.3(TBM = df.residencial.2021.GM[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2021, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2021.GM = IC.TCL.3(TBM = df.domicilio.2021.GM[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2021, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.residencial.2021.Gmp = IC.TCL.3(TBM = df.residencial.2021.Gmp[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2021, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2021.Gmp = IC.TCL.3(TBM = df.domicilio.2021.Gmp[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2021, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+### AÑO 2022
+
+IC.TCL.residencial.2022.HP = IC.TCL.3(TBM = df.residencial.2022.HP[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2022, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2022.HP = IC.TCL.3(TBM = df.domicilio.2022.HP[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2022, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.residencial.2022.GM = IC.TCL.3(TBM = df.residencial.2022.GM[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2022, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2022.GM = IC.TCL.3(TBM = df.domicilio.2022.GM[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2022, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.residencial.2022.Gmp = IC.TCL.3(TBM = df.residencial.2022.Gmp[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2022, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2022.Gmp = IC.TCL.3(TBM = df.domicilio.2022.Gmp[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2022, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+### AÑO 2023
+
+IC.TCL.residencial.2023.HP = IC.TCL.3(TBM = df.residencial.2023.HP[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2023, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2023.HP = IC.TCL.3(TBM = df.domicilio.2023.HP[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2023, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.residencial.2023.GM = IC.TCL.3(TBM = df.residencial.2023.GM[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2023, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2023.GM = IC.TCL.3(TBM = df.domicilio.2023.GM[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2023, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.residencial.2023.Gmp = IC.TCL.3(TBM = df.residencial.2023.Gmp[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2023, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2023.Gmp = IC.TCL.3(TBM = df.domicilio.2023.Gmp[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2023, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+### AÑO 2024
+
+IC.TCL.residencial.2024.HP = IC.TCL.3(TBM = df.residencial.2024.HP[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2024, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2024.HP = IC.TCL.3(TBM = df.domicilio.2024.HP[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2024, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.residencial.2024.GM = IC.TCL.3(TBM = df.residencial.2024.GM[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2024, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2024.GM = IC.TCL.3(TBM = df.domicilio.2024.GM[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2024, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.residencial.2024.Gmp = IC.TCL.3(TBM = df.residencial.2024.Gmp[, c(1,14:19)], 
+                                 supervivientes = supervivientes.residencial.2024, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+IC.TCL.domicilio.2024.Gmp = IC.TCL.3(TBM = df.domicilio.2024.Gmp[, c(1,14:19)], 
+                                 supervivientes = supervivientes.domicilio.2024, 
+                                 alpha = 0.05, 
+                                 titl = "Pred")
+
+### AÑO 2025 - AÚN NO HAN LLEGADO LOS DATOS DE LAS DEFUNCIONES
+
+
+
+```
+
+**Gráficos de los IC**
+
+```{r}
+
+# AÑO 2017
+
+pdf(paste0("Año-2017/Gráficas-IC", ".pdf"), width = 10, height = 6)
+par(mfrow=c(2,1))
+
+evolucion.IC(LI = IC.TCL.residencial.2017.HP[, 2:7],
+             Est = IC.TCL.residencial.2017.HP[, 8:13],
+             UI = IC.TCL.residencial.2017.HP[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2017,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Heligman & Pollard",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2017.HP[, 2:7],
+             Est = IC.TCL.domicilio.2017.HP[, 8:13],
+             UI = IC.TCL.domicilio.2017.HP[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2017,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Heligman & Pollard",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.residencial.2017.Gmp[, 2:7],
+             Est = IC.TCL.residencial.2017.Gmp[, 8:13],
+             UI = IC.TCL.residencial.2017.Gmp[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2017,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2017.Gmp[, 2:7],
+             Est = IC.TCL.domicilio.2017.Gmp[, 8:13],
+             UI = IC.TCL.domicilio.2017.Gmp[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2017,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.residencial.2017.GM[, 2:7],
+             Est = IC.TCL.residencial.2017.GM[, 8:13],
+             UI = IC.TCL.residencial.2017.GM[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2017,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz-Makeham",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2017.GM[, 2:7],
+             Est = IC.TCL.domicilio.2017.GM[, 8:13],
+             UI = IC.TCL.domicilio.2017.GM[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2017,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz-Makeham",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+dev.off()
+
+# AÑO 2018
+
+pdf(paste0("Año-2018/Gráficas-IC", ".pdf"), width = 10, height = 6)
+par(mfrow=c(2,1))
+
+evolucion.IC(LI = IC.TCL.residencial.2018.HP[, 2:7],
+             Est = IC.TCL.residencial.2018.HP[, 8:13],
+             UI = IC.TCL.residencial.2018.HP[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2018,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Heligman & Pollard",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2018.HP[, 2:7],
+             Est = IC.TCL.domicilio.2018.HP[, 8:13],
+             UI = IC.TCL.domicilio.2018.HP[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2018,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Heligman & Pollard",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.residencial.2018.Gmp[, 2:7],
+             Est = IC.TCL.residencial.2018.Gmp[, 8:13],
+             UI = IC.TCL.residencial.2018.Gmp[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2018,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2018.Gmp[, 2:7],
+             Est = IC.TCL.domicilio.2018.Gmp[, 8:13],
+             UI = IC.TCL.domicilio.2018.Gmp[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2018,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.residencial.2018.GM[, 2:7],
+             Est = IC.TCL.residencial.2018.GM[, 8:13],
+             UI = IC.TCL.residencial.2018.GM[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2018,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz-Makeham",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2018.GM[, 2:7],
+             Est = IC.TCL.domicilio.2018.GM[, 8:13],
+             UI = IC.TCL.domicilio.2018.GM[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2018,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz-Makeham",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+dev.off()
+
+# AÑO 2019
+
+pdf(paste0("Año-2019/Gráficas-IC", ".pdf"), width = 10, height = 6)
+par(mfrow=c(2,1))
+
+evolucion.IC(LI = IC.TCL.residencial.2019.HP[, 2:7],
+             Est = IC.TCL.residencial.2019.HP[, 8:13],
+             UI = IC.TCL.residencial.2019.HP[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2019,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Heligman & Pollard",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2019.HP[, 2:7],
+             Est = IC.TCL.domicilio.2019.HP[, 8:13],
+             UI = IC.TCL.domicilio.2019.HP[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2019,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Heligman & Pollard",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.residencial.2019.Gmp[, 2:7],
+             Est = IC.TCL.residencial.2019.Gmp[, 8:13],
+             UI = IC.TCL.residencial.2019.Gmp[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2019,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2019.Gmp[, 2:7],
+             Est = IC.TCL.domicilio.2019.Gmp[, 8:13],
+             UI = IC.TCL.domicilio.2019.Gmp[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2019,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.residencial.2019.GM[, 2:7],
+             Est = IC.TCL.residencial.2019.GM[, 8:13],
+             UI = IC.TCL.residencial.2019.GM[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2019,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz-Makeham",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2019.GM[, 2:7],
+             Est = IC.TCL.domicilio.2019.GM[, 8:13],
+             UI = IC.TCL.domicilio.2019.GM[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2019,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz-Makeham",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+dev.off()
+
+# AÑO 2020
+
+pdf(paste0("Año-2020/Gráficas-IC", ".pdf"), width = 10, height = 6)
+par(mfrow=c(2,1))
+
+evolucion.IC(LI = IC.TCL.residencial.2020.HP[, 2:7],
+             Est = IC.TCL.residencial.2020.HP[, 8:13],
+             UI = IC.TCL.residencial.2020.HP[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2020,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Heligman & Pollard",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2020.HP[, 2:7],
+             Est = IC.TCL.domicilio.2020.HP[, 8:13],
+             UI = IC.TCL.domicilio.2020.HP[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2020,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Heligman & Pollard",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.residencial.2020.Gmp[, 2:7],
+             Est = IC.TCL.residencial.2020.Gmp[, 8:13],
+             UI = IC.TCL.residencial.2020.Gmp[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2020,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2020.Gmp[, 2:7],
+             Est = IC.TCL.domicilio.2020.Gmp[, 8:13],
+             UI = IC.TCL.domicilio.2020.Gmp[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2020,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.residencial.2020.GM[, 2:7],
+             Est = IC.TCL.residencial.2020.GM[, 8:13],
+             UI = IC.TCL.residencial.2020.GM[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2020,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz-Makeham",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2020.GM[, 2:7],
+             Est = IC.TCL.domicilio.2020.GM[, 8:13],
+             UI = IC.TCL.domicilio.2020.GM[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2020,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz-Makeham",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+dev.off()
+
+# AÑO 2021
+
+pdf(paste0("Año-2021/Gráficas-IC", ".pdf"), width = 10, height = 6)
+par(mfrow=c(2,1))
+
+evolucion.IC(LI = IC.TCL.residencial.2021.HP[, 2:7],
+             Est = IC.TCL.residencial.2021.HP[, 8:13],
+             UI = IC.TCL.residencial.2021.HP[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2021,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Heligman & Pollard",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2021.HP[, 2:7],
+             Est = IC.TCL.domicilio.2021.HP[, 8:13],
+             UI = IC.TCL.domicilio.2021.HP[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2021,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Heligman & Pollard",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.residencial.2021.Gmp[, 2:7],
+             Est = IC.TCL.residencial.2021.Gmp[, 8:13],
+             UI = IC.TCL.residencial.2021.Gmp[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2021,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2021.Gmp[, 2:7],
+             Est = IC.TCL.domicilio.2021.Gmp[, 8:13],
+             UI = IC.TCL.domicilio.2021.Gmp[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2021,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.residencial.2021.GM[, 2:7],
+             Est = IC.TCL.residencial.2021.GM[, 8:13],
+             UI = IC.TCL.residencial.2021.GM[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2021,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz-Makeham",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2021.GM[, 2:7],
+             Est = IC.TCL.domicilio.2021.GM[, 8:13],
+             UI = IC.TCL.domicilio.2021.GM[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2021,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz-Makeham",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+dev.off()
+
+# AÑO 2022
+
+pdf(paste0("Año-2022/Gráficas-IC", ".pdf"), width = 10, height = 6)
+par(mfrow=c(2,1))
+
+evolucion.IC(LI = IC.TCL.residencial.2022.HP[, 2:7],
+             Est = IC.TCL.residencial.2022.HP[, 8:13],
+             UI = IC.TCL.residencial.2022.HP[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2022,
+             Grafico.XXXX = c("Figura 33.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Heligman & Pollard",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2022.HP[, 2:7],
+             Est = IC.TCL.domicilio.2022.HP[, 8:13],
+             UI = IC.TCL.domicilio.2022.HP[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2022,
+             Grafico.XXXX = c("Figura 34.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Heligman & Pollard",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.residencial.2022.Gmp[, 2:7],
+             Est = IC.TCL.residencial.2022.Gmp[, 8:13],
+             UI = IC.TCL.residencial.2022.Gmp[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2022,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2022.Gmp[, 2:7],
+             Est = IC.TCL.domicilio.2022.Gmp[, 8:13],
+             UI = IC.TCL.domicilio.2022.Gmp[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2022,
+             Grafico.XXXX = c("Figura 35.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.residencial.2022.GM[, 2:7],
+             Est = IC.TCL.residencial.2022.GM[, 8:13],
+             UI = IC.TCL.residencial.2022.GM[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2022,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz-Makeham",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2022.GM[, 2:7],
+             Est = IC.TCL.domicilio.2022.GM[, 8:13],
+             UI = IC.TCL.domicilio.2022.GM[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2022,
+             Grafico.XXXX = c("Figura 36.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz-Makeham",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+dev.off()
+
+# AÑO 2023
+
+pdf(paste0("Año-2023/Gráficas-IC", ".pdf"), width = 10, height = 6)
+par(mfrow=c(2,1))
+
+evolucion.IC(LI = IC.TCL.residencial.2023.HP[, 2:7],
+             Est = IC.TCL.residencial.2023.HP[, 8:13],
+             UI = IC.TCL.residencial.2023.HP[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2023,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Heligman & Pollard",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2023.HP[, 2:7],
+             Est = IC.TCL.domicilio.2023.HP[, 8:13],
+             UI = IC.TCL.domicilio.2023.HP[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2023,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Heligman & Pollard",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.residencial.2023.Gmp[, 2:7],
+             Est = IC.TCL.residencial.2023.Gmp[, 8:13],
+             UI = IC.TCL.residencial.2023.Gmp[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2023,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2023.Gmp[, 2:7],
+             Est = IC.TCL.domicilio.2023.Gmp[, 8:13],
+             UI = IC.TCL.domicilio.2023.Gmp[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2023,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.residencial.2023.GM[, 2:7],
+             Est = IC.TCL.residencial.2023.GM[, 8:13],
+             UI = IC.TCL.residencial.2023.GM[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2023,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz-Makeham",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2023.GM[, 2:7],
+             Est = IC.TCL.domicilio.2023.GM[, 8:13],
+             UI = IC.TCL.domicilio.2023.GM[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2023,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz-Makeham",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+dev.off()
+
+# AÑO 2024
+
+pdf(paste0("Año-2024/Gráficas-IC", ".pdf"), width = 10, height = 6)
+par(mfrow=c(2,1))
+
+evolucion.IC(LI = IC.TCL.residencial.2024.HP[, 2:7],
+             Est = IC.TCL.residencial.2024.HP[, 8:13],
+             UI = IC.TCL.residencial.2024.HP[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2024,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Heligman & Pollard",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2024.HP[, 2:7],
+             Est = IC.TCL.domicilio.2024.HP[, 8:13],
+             UI = IC.TCL.domicilio.2024.HP[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2024,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Heligman & Pollard",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.residencial.2024.Gmp[, 2:7],
+             Est = IC.TCL.residencial.2024.Gmp[, 8:13],
+             UI = IC.TCL.residencial.2024.Gmp[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2024,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2024.Gmp[, 2:7],
+             Est = IC.TCL.domicilio.2024.Gmp[, 8:13],
+             UI = IC.TCL.domicilio.2024.Gmp[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2024,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.residencial.2024.GM[, 2:7],
+             Est = IC.TCL.residencial.2024.GM[, 8:13],
+             UI = IC.TCL.residencial.2024.GM[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Residencial",
+             year = 2024,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz-Makeham",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+evolucion.IC(LI = IC.TCL.domicilio.2024.GM[, 2:7],
+             Est = IC.TCL.domicilio.2024.GM[, 8:13],
+             UI = IC.TCL.domicilio.2024.GM[, 14:19],
+             rango.edades = 0:115,
+             col = c("red", "black", "blue"),
+             sexo = rep(c("Hombre", "Mujer"), each = 3),
+             tipo.atencion = "Atencion Domicilio",
+             year = 2024,
+             Grafico.XXXX = c("Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X.", 
+                              "Gráfico X.X.", "Gráfico X.X.", "Gráfico X.X."),
+             ajuste.XXXX = "Gompertz-Makeham",
+             Grado.X = paste0("Grado " ,rep(c("I", "II", "III"), times = 2)))
+
+dev.off()
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
