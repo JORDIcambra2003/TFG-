@@ -6523,7 +6523,7 @@ evolucion.ESP.3.2 = function(ESP, ESP.INE, col1, col2, ylimite = NULL, rango.eda
                                          ESP.INE[, 2]), 
                                  Edad = rep(rango.edades, times = 4), 
                                  Sexo = rep("Hombre", times = length(rango.edades)*4), 
-                                 Grado = c(rep(paste0("Grado", c(1,2,3)), each = nrow(ESP)), 
+                                 Grado = c(rep(paste0("Grado ", c(1,2,3)), each = nrow(ESP)), 
                                            rep("INE", times = nrow(ESP.INE)))  )
 
   ESP.atencion.df.M = data.frame(ESP = c(with(ESP, c(`Esp-Mujer-Grado.I`, `Esp-Mujer-Grado.II`, `Esp-Mujer-Grado.III`)),
