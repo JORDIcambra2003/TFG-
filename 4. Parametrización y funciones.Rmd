@@ -1044,7 +1044,7 @@ piramide.1 = function(df1, col1, col2, TITL, tipo.atencion, graf.XX, year.XXXX){
           panel.grid = element_blank(),
           legend.title = element_blank(),
           legend.position = "bottom",
-          legend.key.size = unit(1, "mm"))
+          legend.key.size = unit(5, "mm"))
   
   ### Pirámide de las MUJERES
   
@@ -1086,7 +1086,7 @@ piramide.1 = function(df1, col1, col2, TITL, tipo.atencion, graf.XX, year.XXXX){
       panel.grid = element_blank(),
       legend.title = element_blank(),
       legend.position = "bottom",
-      legend.key.size = unit(1, "mm"))
+      legend.key.size = unit(5, "mm"))
   
   ### ETIQUETAS
   
@@ -1195,7 +1195,7 @@ piramide.1 = function(df1, col1, col2, TITL, tipo.atencion, graf.XX, year.XXXX){
           panel.grid = element_blank(),
           legend.title = element_blank(),
           legend.position = "bottom",
-          legend.key.size = unit(1, "mm"))
+          legend.key.size = unit(5, "mm"))
   
   ### Pirámide de las MUJERES
   
@@ -1237,7 +1237,7 @@ piramide.1 = function(df1, col1, col2, TITL, tipo.atencion, graf.XX, year.XXXX){
       panel.grid = element_blank(),
       legend.title = element_blank(),
       legend.position = "bottom",
-      legend.key.size = unit(1, "mm"))
+      legend.key.size = unit(5, "mm"))
   
   ### ETIQUETAS
   
@@ -1506,7 +1506,7 @@ piramide.2 = function(df1, df2, year.XXXX, colour, TITL, graf.XX){
           panel.grid = element_blank(),
           legend.title = element_blank(),
           legend.position = "bottom",
-          legend.key.size = unit(1, "mm"))
+          legend.key.size = unit(5, "mm"))
   
   ### Pirámide de las MUJERES
   
@@ -1548,7 +1548,7 @@ piramide.2 = function(df1, df2, year.XXXX, colour, TITL, graf.XX){
       panel.grid = element_blank(),
       legend.title = element_blank(),
       legend.position = "bottom",
-      legend.key.size = unit(1, "mm"))
+      legend.key.size = unit(5, "mm"))
   
   ### ETIQUETAS
   
@@ -1654,7 +1654,7 @@ piramide.2 = function(df1, df2, year.XXXX, colour, TITL, graf.XX){
           panel.grid = element_blank(),
           legend.title = element_blank(),
           legend.position = "bottom",
-          legend.key.size = unit(1, "mm"))
+          legend.key.size = unit(5, "mm"))
   
   ### Pirámide de las MUJERES
   
@@ -1696,7 +1696,7 @@ piramide.2 = function(df1, df2, year.XXXX, colour, TITL, graf.XX){
       panel.grid = element_blank(),
       legend.title = element_blank(),
       legend.position = "bottom",
-      legend.key.size = unit(1, "mm"))
+      legend.key.size = unit(5, "mm"))
   
   ### ETIQUETAS
   
@@ -2191,6 +2191,435 @@ print(piramide2)
 }
 
 ```
+
+```{r}
+
+piramide.4 = function(df1, df2, df3, colour, TITL, graf.XX, year.XXXX, xlim = NULL){
+  
+  # df1: Datos con el conjunto de población superviviente residencial
+  # df2: Datos con el conjunto de población superviviente a domicilio
+  # df3: Datos con el conjunto de población del INE
+  # year.XXXX: Año al que pertenecen los datos
+  # colour: colores asignados a cada grupo
+  
+  ### INICIALIZACIÓN - Preparación de los datos
+  
+  # Creamos una variable que determine a que intervalo de edad pertenece un individuo
+  
+  # Atención Residencial:
+  
+  Grupo_edad = factor(cut(x = df1$Edad, 
+                             breaks = c(0, seq(from = 5, to = 95, by = 5), 100), 
+                             labels = c("[0,5]", 
+                                        paste0("(",seq(from = 5, to = 90, by = 5), 
+                                               ",", 
+                                               seq(from = 10, to = 95, by = 5), "]"),
+                                        "(+95]"),
+                             include.lowest = TRUE)) # Grupo edad creado
+
+  df1$Grupo_edad = Grupo_edad
+  
+  # Atención a domicilio
+  
+  Grupo_edad = factor(cut(x = df1$Edad, 
+                             breaks = c(0, seq(from = 5, to = 95, by = 5), 100), 
+                             labels = c("[0,5]", 
+                                        paste0("(",seq(from = 5, to = 90, by = 5), 
+                                               ",", 
+                                               seq(from = 10, to = 95, by = 5), "]"),
+                                        "(+95]"),
+                             include.lowest = TRUE)) # Grupo edad creado
+
+  df2$Grupo_edad = Grupo_edad # Se añade el grupo edad a los datos
+
+  # INE
+  
+  Grupo_edad = factor(cut(x = df3$Edad, 
+                             breaks = c(0, seq(from = 5, to = 95, by = 5), 100), 
+                             labels = c("[0,5]", 
+                                        paste0("(",seq(from = 5, to = 90, by = 5), 
+                                               ",", 
+                                               seq(from = 10, to = 95, by = 5), "]"),
+                                        "(+95]"),
+                             include.lowest = TRUE)) # Grupo edad creado
+
+  df3$Grupo_edad = Grupo_edad # Se añade el grupo edad a los datos
+  
+  # Agrupamos por grupo de edad
+  
+  # Atención Residencial
+  
+  df1.piramde = sqldf("SELECT Grupo_edad, 
+                      SUM(`Hombres`) AS `Hombres`, 
+                      SUM(`Mujeres`) AS `Mujeres`
+                      FROM df1 GROUP BY Grupo_edad")
+  
+  # Atención a domicilio
+  
+  df2.piramde = sqldf("SELECT Grupo_edad, 
+                      SUM(`Hombres`) AS `Hombres`, 
+                      SUM(`Mujeres`) AS `Mujeres`
+                      FROM df2 GROUP BY Grupo_edad")
+  
+   # INE
+  
+  df3.piramde = sqldf("SELECT Grupo_edad, 
+                      SUM(`Hombres`) AS `Hombres`, 
+                      SUM(`Mujeres`) AS `Mujeres`
+                      FROM df3 GROUP BY Grupo_edad")
+
+  # Agrupación de los datos de tal manera que cada fila represente un único grupo
+
+  # Primero: Atención residencial
+
+  df1.piramde = df1.piramde[order(df1.piramde$Grupo_edad), ] # Ordenamos según categoría de edad de forma ascendente
+
+  Hombre = melt(df1.piramde[, c(1,2)], id.vars = "Grupo_edad", variable.name = "Sexo", value.name = "Conteo")
+  Hombre$Sexo = "Hombre"
+
+  Mujer = melt(df1.piramde[, c(1,3)], id.vars = "Grupo_edad", variable.name = "Sexo", value.name = "Conteo")
+  Mujer$Sexo = "Mujer"
+
+  df1.piramde = rbind(Hombre, Mujer) 
+
+  # Segundo: Atención apoyo a domicilio
+
+  df2.piramde = df2.piramde[order(df2.piramde$Grupo_edad), ] # Ordenamos según categoría de edad de forma ascendente
+
+  Hombre = melt(df2.piramde[, c(1,2)], id.vars = "Grupo_edad", variable.name = "Sexo", value.name = "Conteo")
+  Hombre$Sexo = "Hombre"
+
+  Mujer = melt(df2.piramde[, c(1,3)], id.vars = "Grupo_edad", variable.name = "Sexo", value.name = "Conteo")
+  Mujer$Sexo = "Mujer"
+
+  df2.piramde = rbind(Hombre, Mujer)
+  
+  # Tercero: INE
+
+  df3.piramde = df3.piramde[order(df3.piramde$Grupo_edad), ] # Ordenamos según categoría de edad de forma ascendente
+
+  Hombre = melt(df3.piramde[, c(1,2)], id.vars = "Grupo_edad", variable.name = "Sexo", value.name = "Conteo")
+  Hombre$Sexo = "Hombre"
+
+  Mujer = melt(df3.piramde[, c(1,3)], id.vars = "Grupo_edad", variable.name = "Sexo", value.name = "Conteo")
+  Mujer$Sexo = "Mujer"
+
+  df3.piramde = rbind(Hombre, Mujer)
+  
+  # Cuarto: Población no dependiente
+  
+  df4.piramide = df3.piramde
+  df4.piramide$Conteo = df3.piramde$Conteo - df1.piramde$Conteo - df2.piramde$Conteo
+  
+  df1.piramde$Atencion = "Residencial"
+  df2.piramde$Atencion = "Domicilio"
+  df4.piramide$Atencion = "INE"
+  
+  df.piramide = rbind(df1.piramde, df2.piramde, df4.piramide)
+  
+  # Definición de las proporciones y parámetros
+  
+  pop_total = sum(df3.piramde$Conteo)
+  df.piramide$Proporciones = df.piramide$Conteo / pop_total
+  
+  ### PASO 1 - Construcción pirámide de población en porcentajes
+
+  # Pirámide de los HOMBRES
+
+  hombres1 = ggplot(df.piramide[df.piramide$Sexo == "Hombre", ],
+                   aes(x = -Proporciones * 100, 
+                       y = Grupo_edad, 
+                       fill = Atencion)) +
+    
+    geom_col(width = 0.8) +
+    
+    geom_vline(
+      xintercept = seq(-10, 1, 1),
+      linetype = "dashed",
+      linewidth = 0.4,
+      colour = "black") +
+    
+    geom_vline(
+      xintercept = 0,
+      linewidth = 0.7,
+      colour = "black") +
+    
+    annotate("text",
+             x = -9,
+             y = 20,
+             label = "Hombres",
+             fontface = "bold",
+             size = 5) +
+    
+    scale_fill_manual(values = colour[1:3]) +
+    
+    scale_x_continuous(
+      limits = c(-10, 0),
+      breaks = seq(-10, 0, 1),
+      labels = paste0(seq(10, 0, -1), "%")) +
+    
+    theme_minimal() +
+    
+    theme(axis.title = element_blank(),
+          axis.text.y = element_blank(),
+          panel.grid = element_blank(),
+          legend.title = element_blank(),
+          legend.position = "bottom")
+  
+  ### Pirámide de las MUJERES
+  
+  mujeres1 = ggplot(df.piramide[df.piramide$Sexo == "Mujer", ],
+                   aes(x = Proporciones * 100, 
+                       y = Grupo_edad, 
+                       fill = Atencion)) +
+    
+  geom_col(width = 0.8) +
+    
+  geom_vline(xintercept = seq(1, 10, 1),
+             linetype = "dashed",
+             linewidth = 0.4,
+             colour = "black") +
+    
+  geom_vline(xintercept = 0,
+             linewidth = 0.7,
+             colour = "black"
+             ) +
+    
+  annotate("text",
+           x = 9,
+           y = 20,
+           label = "Mujeres",
+           fontface = "bold",
+           size = 5) +
+    
+  scale_fill_manual(values = colour[4:6]) +
+  
+  scale_x_continuous(limits = c(0,10),
+                     breaks = seq(0, 10, 1),
+                     labels = paste0(seq(0, 10, 1), "%")) +
+    
+  theme_minimal() +
+    
+    theme(
+      axis.title = element_blank(),
+      axis.text.y = element_blank(),
+      panel.grid = element_blank(),
+      legend.title = element_blank(),
+      legend.position = "bottom")
+  
+  ### ETIQUETAS
+  
+  df.grupos.edad1 = data.frame(
+    Grupo_edad = levels(Grupo_edad),
+    y = seq_along(levels(Grupo_edad)) - 0.5)
+  
+  etiquetas1 = ggplot(df.grupos.edad1, aes(x = 0.5,
+                                         y = y,
+                                         label = Grupo_edad)) +
+    geom_text(fontface = "bold", size = 4) +
+    scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
+    scale_y_continuous(
+      limits = c(0, length(levels(Grupo_edad))),
+      expand = c(0, 0)) +
+    theme_void()
+  
+  ### TÍTULO
+  
+  titulo1 = ggplot() +
+    
+    annotate("text",
+             x = 0.5,
+             y = 1.7,
+             label = paste0(graf.XX[1], " ", TITL),
+             size = 3.5) +
+    
+    annotate("text",
+             x = 0.5,
+             y = 0.5,
+             label = paste0("Año: ",
+                            year.XXXX,
+                            ". Medida: Porcentaje."),
+             size = 3,
+             colour = "gray30") +
+    
+    xlim(0, 1) +
+    ylim(0, 2) +
+    theme_void()
+  
+  ### FUENTE
+  
+  fuente1 = ggplot() +
+  annotate(
+    "text",
+    x = 0.5,
+    y = 0.2,
+    label = "Fuente: Elaboración propia. Datos: INE, IMSERSO",
+    hjust = 0,
+    size = 3.5
+  ) +
+  xlim(0, 1) +
+  ylim(0, 1) +
+  theme_void()
+  
+  ### Unión de los 4 gráficos
+  
+  piramide1 = (titulo1 / (hombres1 + etiquetas1 + mujeres1 +
+                         plot_layout(widths = c(1, 0.15, 1))) / fuente1) +
+  plot_layout(heights = c(0.07, 1, 0.08))
+
+print(piramide1)
+
+  ### PASO 2 - Pirámide de población según total poblacional
+
+  # Pirámide de los HOMBRES
+
+  hombres2 = ggplot(df.piramide[df.piramide$Sexo == "Hombre", ],
+                   aes(x = -Conteo, 
+                       y = Grupo_edad, 
+                       fill = Atencion)) +
+    
+    geom_col(width = 0.8) +
+    
+    geom_vline(
+      xintercept = seq(-300000, -50000, 50000),
+      linetype = "dashed",
+      linewidth = 0.4,
+      colour = "black") +
+    
+    geom_vline(
+      xintercept = 0,
+      linewidth = 0.7,
+      colour = "black") +
+    
+    annotate("text",
+             x = -250000,
+             y = 20,
+             label = "Hombres",
+             fontface = "bold",
+             size = 5) +
+    
+    scale_fill_manual(values = colour[1:3]) +
+    
+    scale_x_continuous(limits = c(-300000, 0),
+                       breaks = seq(-300000, 0, 50000),
+                       labels = paste0(seq(3, 0, -0.5), " mil")) +
+    
+    theme_minimal() +
+    
+    theme(axis.title = element_blank(),
+          axis.text.y = element_blank(),
+          panel.grid = element_blank(),
+          legend.title = element_blank(),
+          legend.position = "bottom")
+  
+  ### Pirámide de las MUJERES
+  
+  mujeres2 = ggplot(df.piramide[df.piramide$Sexo == "Mujer", ],
+                   aes(x = Conteo, 
+                       y = Grupo_edad, 
+                       fill = Atencion)) +
+    
+  geom_col(width = 0.8) +
+    
+  geom_vline(xintercept = seq(50000, 300000, 50000),
+             linetype = "dashed",
+             linewidth = 0.4,
+             colour = "black") +
+    
+  geom_vline(xintercept = 0,
+             linewidth = 0.7,
+             colour = "black"
+             ) +
+    
+  annotate("text",
+           x = 250000,
+           y = 20,
+           label = "Mujeres",
+           fontface = "bold",
+           size = 5) +
+    
+  scale_fill_manual(values = colour[4:6]) +
+  
+  scale_x_continuous(limits = c(0,300000),
+                     breaks = seq(0, 300000, 50000),
+                     labels = paste0(seq(0, 3, 0.5), " mil")) +
+    
+  theme_minimal() +
+    
+    theme(
+      axis.title = element_blank(),
+      axis.text.y = element_blank(),
+      panel.grid = element_blank(),
+      legend.title = element_blank(),
+      legend.position = "bottom")
+  
+  ### ETIQUETAS
+  
+  df.grupos.edad2 = data.frame(
+    Grupo_edad = levels(Grupo_edad),
+    y = seq_along(levels(Grupo_edad)) - 0.5)
+  
+  etiquetas2 = ggplot(df.grupos.edad2, aes(x = 0.5,
+                                         y = y,
+                                         label = Grupo_edad)) +
+    geom_text(fontface = "bold", size = 4) +
+    scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
+    scale_y_continuous(
+      limits = c(0, length(levels(Grupo_edad))),
+      expand = c(0, 0)) +
+    theme_void()
+  
+  ### TÍTULO
+  
+  titulo2 = ggplot() +
+    
+    annotate("text",
+             x = 0.5,
+             y = 1.7,
+             label = paste0(graf.XX[2], " ", TITL),
+             size = 3.5) +
+    
+    annotate("text",
+             x = 0.5,
+             y = 0.5,
+             label = paste0("Año: ",
+                            year.XXXX,
+                            ". Medida: Cantidad de supervivientes."),
+             size = 3,
+             colour = "gray30") +
+    
+    xlim(0, 1) +
+    ylim(0, 2) +
+    theme_void()
+  
+  ### FUENTE
+  
+  fuente2 <- ggplot() +
+  annotate(
+    "text",
+    x = 0.5,
+    y = 0.8,
+    label = "Fuente: Elaboración propia. Datos: INE, IMSERSO",
+    hjust = 0,
+    size = 3.5
+  ) +
+  xlim(0, 1) +
+  ylim(0, 1) +
+  theme_void()
+  
+  ### Unión de los 4 gráficos
+  
+piramide2 = (titulo2 / (hombres2 + etiquetas2 + mujeres2 +
+                         plot_layout(widths = c(1, 0.15, 1))) / fuente2) +
+  plot_layout(heights = c(0.07, 1, 0.08))
+
+print(piramide2)
+  
+  
+}
+
+```
+
 
 ### EVOLUCIÓN DEL NÚMERO DE SUPERVIVIENTES / DEFUNCIONES
 

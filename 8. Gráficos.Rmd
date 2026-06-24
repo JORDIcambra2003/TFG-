@@ -780,8 +780,8 @@ piramide.3(df1 = supervivientes.residencial.2017.piramide,
            TITL = "Pirámide de población según grado de dependecia y tipo de atención agrupado por sexo.",
            graf.XX = c("Figura X.X.", "Figura X.X."))
 
-piramide.3(df1 = defunciones.residencial.2017.piramide, 
-           df2 = defunciones.domicilio.2017.piramide, 
+piramide.4(df1 = defunciones.residencial.2017.piramide,
+           df2 = defunciones.domicilio.2017.piramide,
            df3 = defunciones.INE.2017.piramide,
            year.XXXX = 2017, 
            colour = c("cornflowerblue","blue","deepskyblue",
@@ -831,7 +831,7 @@ piramide.3(df1 = supervivientes.residencial.2018.piramide,
            TITL = "Pirámide de población según grado de dependecia y tipo de atención agrupado por sexo.",
            graf.XX = c("Figura 6.", "Figura X.X."))
 
-piramide.3(df1 = defunciones.residencial.2018.piramide, 
+piramide.4(df1 = defunciones.residencial.2018.piramide, 
            df2 = defunciones.domicilio.2018.piramide, 
            df3 = defunciones.INE.2018.piramide,
            year.XXXX = 2018, 
@@ -882,7 +882,7 @@ piramide.3(df1 = supervivientes.residencial.2019.piramide,
            TITL = "Pirámide de población según grado de dependecia y tipo de atención agrupado por sexo.",
            graf.XX = c("Figura X.X.", "Figura X.X."))
 
-piramide.3(df1 = defunciones.residencial.2019.piramide, 
+piramide.4(df1 = defunciones.residencial.2019.piramide, 
            df2 = defunciones.domicilio.2019.piramide, 
            df3 = defunciones.INE.2019.piramide,
            year.XXXX = 2019, 
@@ -933,7 +933,7 @@ piramide.3(df1 = supervivientes.residencial.2020.piramide,
            TITL = "Pirámide de población según grado de dependecia y tipo de atención agrupado por sexo.",
            graf.XX = c("Figura X.X.", "Figura X.X."))
 
-piramide.3(df1 = defunciones.residencial.2020.piramide, 
+piramide.4(df1 = defunciones.residencial.2020.piramide, 
            df2 = defunciones.domicilio.2020.piramide, 
            df3 = defunciones.INE.2020.piramide,
            year.XXXX = 2020, 
@@ -984,7 +984,7 @@ piramide.3(df1 = supervivientes.residencial.2021.piramide,
            TITL = "Pirámide de población según grado de dependecia y tipo de atención agrupado por sexo.",
            graf.XX = c("Figura X.X.", "Figura X.X."))
 
-piramide.3(df1 = defunciones.residencial.2021.piramide, 
+piramide.4(df1 = defunciones.residencial.2021.piramide, 
            df2 = defunciones.domicilio.2021.piramide, 
            df3 = defunciones.INE.2021.piramide,
            year.XXXX = 2021, 
@@ -1035,7 +1035,7 @@ piramide.3(df1 = supervivientes.residencial.2022.piramide,
            TITL = "Pirámide de población según grado de dependecia y tipo de atención agrupado por sexo.",
            graf.XX = c("Figura X.X.", "Figura X.X."))
 
-piramide.3(df1 = defunciones.residencial.2022.piramide, 
+piramide.4(df1 = defunciones.residencial.2022.piramide, 
            df2 = defunciones.domicilio.2022.piramide, 
            df3 = defunciones.INE.2022.piramide,
            year.XXXX = 2022, 
@@ -1087,7 +1087,7 @@ piramide.3(df1 = supervivientes.residencial.2023.piramide,
            TITL = "Pirámide de población según grado de dependecia y tipo de atención agrupado por sexo.",
            graf.XX = c("Figura X.X.", "Figura X.X."))
 
-piramide.3(df1 = defunciones.residencial.2023.piramide, 
+piramide.4(df1 = defunciones.residencial.2023.piramide, 
            df2 = defunciones.domicilio.2023.piramide, 
            df3 = defunciones.INE.2023.piramide,
            year.XXXX = 2023, 
@@ -1138,7 +1138,7 @@ piramide.3(df1 = supervivientes.residencial.2024.piramide,
            TITL = "Pirámide de población según grado de dependecia y tipo de atención agrupado por sexo.",
            graf.XX = c("Figura X.X.", "Figura X.X."))
 
-piramide.3(df1 = defunciones.residencial.2024.piramide, 
+piramide.4(df1 = defunciones.residencial.2024.piramide, 
            df2 = defunciones.domicilio.2024.piramide, 
            df3 = defunciones.INE.2024.piramide,
            year.XXXX = 2024, 
@@ -3811,10 +3811,7 @@ dev.off()
 
 ```{r}
 
-col = c("deepskyblue","deepskyblue3","deepskyblue4",
-        "chartreuse","chartreuse3","chartreuse4",
-        "cornflowerblue", "blue","darkblue",
-        "darkolivegreen1", "darkolivegreen3","darkolivegreen")
+
 
 ### AÑO 2017
 
